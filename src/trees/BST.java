@@ -3,16 +3,20 @@ package trees;
 import java.util.*;
 
 public class BST<T extends Comparable<T>> {
-    private int nodeCount;
-    private BSTNode<T> root;
+    protected int nodeCount;
+    protected BSTNode<T> root;
 
     public BST() {
         this.nodeCount = 0;
         this.root = null;
     }
 
+    public BSTNode<T> createNewNode(T value) {
+        return new BSTNode<>(value);
+    }
+
     public BSTNode<T> insert(T node) {
-        BSTNode<T> newNode = new BSTNode<>(node);
+        BSTNode<T> newNode = createNewNode(node);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
