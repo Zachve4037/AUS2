@@ -1,4 +1,9 @@
 package trees.avl;
 
-public class AVLNode {
+import trees.BSTNode;
+
+public class AVLNode<T> extends BSTNode {
+    public AVLNode(Comparable value) {
+        super(value);
+    }
 }
