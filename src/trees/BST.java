@@ -138,4 +138,31 @@ public class BST<T extends Comparable<T>> {
         return res;
     }
 
+    public T findMin() {
+        if (this.root == null) {
+            return null;
+        } else if (this.root.getLeftSon() == null) {
+            return this.root.getValue();
+        } else {
+            BSTNode<T> current = this.root.getLeftSon();
+            while (current.getLeftSon() != null) {
+                current = current.getLeftSon();
+            }
+            return current.getValue();
+        }
+    }
+
+    public T findMax() {
+        if (this.root == null) {
+            return null;
+        } else if (this.root.getRightSon() == null) {
+            return this.root.getValue();
+        } else {
+            BSTNode<T> current = this.root.getRightSon();
+            while (current.getRightSon() != null) {
+                current = current.getRightSon();
+            }
+            return current.getValue();
+        }
+    }
 }
