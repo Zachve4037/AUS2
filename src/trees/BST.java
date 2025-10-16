@@ -15,7 +15,12 @@ public class BST<T extends Comparable<T>> {
         return new BSTNode<>(value);
     }
 
-    public BSTNode<T> insert(T node) {
+    public boolean insert(T node) {
+        BSTNode<T> newNode =  this.innerInsert(node);
+        return newNode != null;
+    }
+
+    public BSTNode<T> innerInsert(T node) {
         BSTNode<T> newNode = createNewNode(node);
         if (this.root == null) {
             this.setRoot(newNode);
@@ -46,12 +51,12 @@ public class BST<T extends Comparable<T>> {
         return newNode;
     }
 
-    public BSTNode<T> search(T node) {
+    public T search(T node) {
         BSTNode<T> current = this.root;
         while (current != null) {
             int cmp = node.compareTo(current.getValue());
             if (cmp == 0) {
-                return current;
+                return current.getValue();
             } else if (cmp < 0) {
                 current = current.getLeftSon();
             } else {
@@ -115,14 +120,14 @@ public class BST<T extends Comparable<T>> {
 
     public List<T> intervalSearch(T low, T high) {
         List<T> res = new ArrayList<>();
-        Deque<BSTNode<T>> queue = new ArrayDeque<>();
+        List<BSTNode<T>> stack = new ArrayList<>();
         BSTNode<T> current = this.root;
-        while(current != null || !queue.isEmpty()) {
+        while(current != null || !stack.isEmpty()) {
             while(current != null) {
-                queue.push(current);
+                stack.add(current);
                 current = current.getLeftSon();
             }
-            current = queue.pop();
+            current = stack.removeLast();
             T val = current.getValue();
 
             if (val.compareTo(low) >= 0 && val.compareTo(high) <= 0) {
@@ -136,6 +141,20 @@ public class BST<T extends Comparable<T>> {
             current = current.getRightSon();
         }
         return res;
+    }
+
+    public void inOrder() {
+        List<BSTNode<T>> stack = new ArrayList<>();
+        BSTNode<T> current = this.root;
+        while (current != null || !stack.isEmpty()) {
+            while(current != null) {
+                stack.add(current);
+                current = current.getLeftSon();
+            }
+            current = stack.removeLast();
+            System.out.println(current.getValue());
+            current = current.getRightSon();
+        }
     }
 
     public T findMin() {

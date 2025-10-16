@@ -10,5 +10,5 @@ void main() {
     bst.insert(60);
     bst.insert(80);
 
-    System.out.println(bst.intervalSearch(10,80));
+    bst.inOrder();
 }

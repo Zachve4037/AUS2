@@ -37,4 +37,9 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
             parent.setParent(current);
         }
     }
+
+    @Override
+    public AVLNode<T> createNewNode(T value) {
+        return new AVLNode<>(value);
+    }
 }
