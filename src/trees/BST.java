@@ -118,6 +118,10 @@ public class BST<T extends Comparable<T>> {
         this.root = root;
     }
 
+    public BSTNode<T> getRoot() {
+        return this.root;
+    }
+
     public List<T> intervalSearch(T low, T high) {
         List<T> res = new ArrayList<>();
         List<BSTNode<T>> stack = new ArrayList<>();
