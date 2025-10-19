@@ -1,14 +1,20 @@
 import trees.BST;
+import trees.avl.AVLNode;
+import trees.avl.AVLTree;
 
 void main() {
-    BST<Integer> bst = new BST<>();
-    bst.insert(50);
-    bst.insert(30);
-    bst.insert(70);
-    bst.insert(20);
-    bst.insert(40);
-    bst.insert(60);
-    bst.insert(80);
+    AVLTree<Integer> avl = new AVLTree<>();
+    avl.insert(30);
+    avl.insert(29);
+    avl.insert(20);
+    AVLNode<Integer> test = (AVLNode<Integer>) avl.innerInsert(25);
+    avl.insert(22);
+    avl.insert(26);
+    avl.insert(19);
 
-    bst.inOrder();
+    avl.inOrder();
+
+    avl.rotateLeftRight(test);
+
+    avl.inOrder();
 }
