@@ -44,7 +44,9 @@ public class Tester {
             this.bst = new BST<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
+            int ig = 0;
             for (int i = 0; i < OPERATIONS; i++) {
+                ig = i;
                 if (rng.nextInt(100) < 70) {
                     int val = rng.nextInt();
                     this.bst.insert(val);
@@ -58,10 +60,10 @@ public class Tester {
                     }
                 }
             }
-            System.out.println("Finished operations for test " + j);
             if (!sameNodesBST(this.bst, pom)) {
-                throw new AssertionError("error at " + j);
+                throw new AssertionError("error at " + j + " operation " + ig);
             }
+            System.out.println("Finished operations for test " + j);
             System.out.println(j);
         }
     }
