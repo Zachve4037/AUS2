@@ -16,16 +16,11 @@ public class BST<T extends Comparable<T>> {
     }
 
     public boolean insert(T node) {
-        BSTNode<T> newNode =  this.innerInsert(node);
-        return newNode != null;
-    }
-
-    public BSTNode<T> innerInsert(T node) {
         BSTNode<T> newNode = createNewNode(node);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
-            return this.root;
+            return true;
         }
 
         BSTNode<T> current = this.root;
@@ -38,7 +33,7 @@ public class BST<T extends Comparable<T>> {
             } else if (cmp > 0) {
                 current = current.getRightSon();
             } else {
-                return null;
+                return false;
             }
         }
         if (node.compareTo(parent.getValue()) < 0) {
@@ -48,7 +43,7 @@ public class BST<T extends Comparable<T>> {
         }
         newNode.setParent(parent);
         this.nodeCount++;
-        return newNode;
+        return true;
     }
 
     public T search(T node) {
@@ -100,6 +95,9 @@ public class BST<T extends Comparable<T>> {
     }
 
     public void replaceNode(BSTNode<T> target, BSTNode<T> replacement) {
+        if (replacement != null) {
+            replacement.setParent(target.getParent());
+        }
         if (target.getParent() == null) {
             root = replacement;
         }
@@ -109,22 +107,15 @@ public class BST<T extends Comparable<T>> {
         else {
             target.getParent().setRightSon(replacement);
         }
-        if (replacement != null) {
-            replacement.setParent(target.getParent());
-        }
     }
 
     public void setRoot(BSTNode<T> root) {
         this.root = root;
     }
 
-    public BSTNode<T> getRoot() {
-        return this.root;
-    }
-
     public List<T> intervalSearch(T low, T high) {
-        List<T> res = new ArrayList<>();
-        List<BSTNode<T>> stack = new ArrayList<>();
+        List<T> res = new LinkedList<>();
+        List<BSTNode<T>> stack = new LinkedList<>();
         BSTNode<T> current = this.root;
         while(current != null || !stack.isEmpty()) {
             while(current != null) {
@@ -149,30 +140,38 @@ public class BST<T extends Comparable<T>> {
 
     public List<T> inOrder(boolean print) {
         List<T> res = new LinkedList<>();
+        for (BSTNode<T> val : innerInOrder(this.root)) {
+            if (print) {
+                System.out.println(val.getValue());
+            }
+            res.add(val.getValue());
+        }
+        return res;
+    }
+
+    protected List<BSTNode<T>> innerInOrder(BSTNode<T> startNode) {
+        List<BSTNode<T>> res = new LinkedList<>();
         List<BSTNode<T>> stack = new LinkedList<>();
-        BSTNode<T> current = this.root;
+        BSTNode<T> current = startNode;
         while (current != null || !stack.isEmpty()) {
             while(current != null) {
                 stack.add(current);
                 current = current.getLeftSon();
             }
             current = stack.removeLast();
-            if (print) {
-                System.out.println(current.getValue());
-            }
-            res.add(current.getValue());
+            res.add(current);
             current = current.getRightSon();
         }
         return res;
     }
 
-    public T findMin() {
-        if (this.root == null) {
+    public T findMin(BSTNode<T> startNode) {
+        if (startNode == null) {
             return null;
-        } else if (this.root.getLeftSon() == null) {
-            return this.root.getValue();
+        } else if (startNode.getLeftSon() == null) {
+            return startNode.getValue();
         } else {
-            BSTNode<T> current = this.root.getLeftSon();
+            BSTNode<T> current = startNode.getLeftSon();
             while (current.getLeftSon() != null) {
                 current = current.getLeftSon();
             }
@@ -180,13 +179,13 @@ public class BST<T extends Comparable<T>> {
         }
     }
 
-    public T findMax() {
-        if (this.root == null) {
+    public T findMax(BSTNode<T> startNode) {
+        if (startNode == null) {
             return null;
-        } else if (this.root.getRightSon() == null) {
-            return this.root.getValue();
+        } else if (startNode.getRightSon() == null) {
+            return startNode.getValue();
         } else {
-            BSTNode<T> current = this.root.getRightSon();
+            BSTNode<T> current = startNode.getRightSon();
             while (current.getRightSon() != null) {
                 current = current.getRightSon();
             }
@@ -194,7 +193,7 @@ public class BST<T extends Comparable<T>> {
         }
     }
 
-    public int getNodeCount() {
-        return this.nodeCount;
+    public BSTNode<T> getRoot() {
+        return this.root;
     }
 }
