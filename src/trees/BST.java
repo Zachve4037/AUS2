@@ -147,8 +147,9 @@ public class BST<T extends Comparable<T>> {
         return res;
     }
 
-    public void inOrder() {
-        List<BSTNode<T>> stack = new ArrayList<>();
+    public List<T> inOrder(boolean print) {
+        List<T> res = new LinkedList<>();
+        List<BSTNode<T>> stack = new LinkedList<>();
         BSTNode<T> current = this.root;
         while (current != null || !stack.isEmpty()) {
             while(current != null) {
@@ -156,9 +157,13 @@ public class BST<T extends Comparable<T>> {
                 current = current.getLeftSon();
             }
             current = stack.removeLast();
-            System.out.println(current.getValue());
+            if (print) {
+                System.out.println(current.getValue());
+            }
+            res.add(current.getValue());
             current = current.getRightSon();
         }
+        return res;
     }
 
     public T findMin() {
@@ -187,5 +192,9 @@ public class BST<T extends Comparable<T>> {
             }
             return current.getValue();
         }
+    }
+
+    public int getNodeCount() {
+        return this.nodeCount;
     }
 }
