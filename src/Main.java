@@ -6,6 +6,10 @@ import trees.avl.AVLTree;
 public class Main {
     public static void main() {
         Tester teste = new Tester();
-        teste.testAvl();
+//        teste.testAvlBstInsert();
+//        teste.testAvlBstDelete();
+//        teste.testAvlBstSearch();
+//        teste.testAvlBstInterval();
+        teste.testAvlBstMinMax();
     }
 }

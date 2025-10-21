@@ -18,10 +18,175 @@ public class Tester {
     public Tester() {
     }
 
-    public void testAvlBst() {
+    public void testAvlBstInsert() {
         AVLTree<Integer> avl = new AVLTree<>();
         BST<Integer> bst = new BST<>();
 
+        long avlTime = 0L;
+        long bstTime = 0L;
+
+        Random rng = new Random();
+        for (int i = 0; i < INSERT; i++) {
+            int val = rng.nextInt();
+
+            long t0 = System.nanoTime();
+            avl.insert(val);
+            long t1 = System.nanoTime();
+            avlTime += (t1 - t0);
+
+            long t2 = System.nanoTime();
+            bst.insert(val);
+            long t3 = System.nanoTime();
+            bstTime += t3 - t2;
+        }
+        System.out.println("for avl insert " + avlTime / 1_000_000.0);
+        System.out.println("for bst insert " + bstTime / 1_000_000.0);
+    }
+
+    public void testAvlBstDelete() {
+        AVLTree<Integer> avl = new AVLTree<>();
+        BST<Integer> bst = new BST<>();
+        ArrayList<Integer> pom = new ArrayList<>();
+        Random rng = new Random();
+
+        for (int i = 0; i < INSERT; i++) {
+            int val = rng.nextInt();
+            if (avl.insert(val)) {
+                bst.insert(val);
+                pom.add(val);
+            }
+        }
+
+        Collections.shuffle(pom);
+        long avlTime = 0L;
+        long bstTime = 0L;
+
+        for (int i = 0; i < DELETE; i++) {
+            int index = rng.nextInt(pom.size());
+            int val = pom.get(index);
+
+            long t0 = System.nanoTime();
+            avl.delete(val);
+            long t1 = System.nanoTime();
+            avlTime += t1 - t0;
+
+            long t2 = System.nanoTime();
+            bst.delete(val);
+            long t3 = System.nanoTime();
+            bstTime += t3 - t2;
+            pom.remove(index);
+        }
+        System.out.println("for avl delete " + avlTime / 1_000_000.0);
+        System.out.println("for bst delete " + bstTime / 1_000_000.0);
+    }
+
+    public void testAvlBstSearch() {
+        AVLTree<Integer> avl = new AVLTree<>();
+        BST<Integer> bst = new BST<>();
+        ArrayList<Integer> pom = new ArrayList<>();
+        Random rng = new Random();
+
+        for (int i = 0; i < INSERT; i++) {
+            int val = rng.nextInt();
+            if (avl.insert(val)) {
+                bst.insert(val);
+                pom.add(val);
+            }
+        }
+
+        long avlTime = 0L;
+        long bstTime = 0L;
+
+        for (int i = 0; i < SEARCH; i++) {
+            int index = rng.nextInt(pom.size());
+            int val = pom.get(index);
+
+            long t0 = System.nanoTime();
+            avl.search(val);
+            long t1 = System.nanoTime();
+            avlTime += t1 - t0;
+
+            long t2 = System.nanoTime();
+            bst.search(val);
+            long t3 = System.nanoTime();
+            bstTime += t3 - t2;
+        }
+
+        System.out.println("for avl search " + avlTime / 1_000_000.0);
+        System.out.println("for bst search " + bstTime / 1_000_000.0);
+    }
+
+    public void testAvlBstInterval() {
+        AVLTree<Integer> avl = new AVLTree<>();
+        BST<Integer> bst = new BST<>();
+        ArrayList<Integer> pom = new ArrayList<>();
+        Random rng = new Random();
+
+        for (int i = 0; i < 10000; i++) {
+            pom.add(i);
+        }
+        Collections.shuffle(pom);
+        for (int i : pom) {
+            avl.insert(i);
+            bst.insert(i);
+        }
+
+        long avlTime = 0L;
+        long bstTime = 0L;
+
+        for (int i = 0; i < INTERVAL; i++) {
+            int a = rng.nextInt() % 5000;
+            int b = a + rng.nextInt(5000);
+
+            long t0 = System.nanoTime();
+            avl.intervalSearch(a, b);
+            long t1 = System.nanoTime();
+            avlTime += t1 - t0;
+
+            long t2 = System.nanoTime();
+            bst.intervalSearch(a, b);
+            long t3 = System.nanoTime();
+            bstTime += t3 - t2;
+        }
+
+        System.out.println("for avl interval search " + avlTime / 1_000_000.0);
+        System.out.println("for bst interval search " + bstTime / 1_000_000.0);
+    }
+
+    public void testAvlBstMinMax() {
+        long avlTime = 0L;
+        long bstTime = 0L;
+
+        final int MUTATE_INTERVAL = 1000;
+
+        for (int i = 0; i < MINMAX; i++) {
+            AVLTree<Integer> avl = new AVLTree<>();
+            BST<Integer> bst = new BST<>();
+            ArrayList<Integer> pom = new ArrayList<>();
+            Random rng = new Random();
+
+            for (int j = 0; j < 100_000; j++) {
+                int val = rng.nextInt();
+                if (avl.insert(val)) {
+                    bst.insert(val);
+                    pom.add(val);
+                }
+            }
+
+            long t0 = System.nanoTime();
+            avl.findMin(avl.getRoot());
+            avl.findMax(avl.getRoot());
+            long t1 = System.nanoTime();
+            avlTime += t1 - t0;
+
+            long t2 = System.nanoTime();
+            bst.findMin(bst.getRoot());
+            bst.findMax(bst.getRoot());
+            long t3 = System.nanoTime();
+            bstTime += t3 - t2;
+        }
+        System.out.println("for avl min/max " + avlTime / 1_000_000.0);
+        System.out.println("for bst min/max " + bstTime / 1_000_000.0);
 
     }
 
@@ -62,6 +227,8 @@ public class Tester {
             System.out.println("Finished operations for test " + j);
         }
     }
+
+
 
     public void testAvl() {
         for (int j = 50; j < 150; j++) {
