@@ -15,8 +15,8 @@ public class BST<T extends Comparable<T>> {
         return new BSTNode<>(value);
     }
 
-    public boolean insert(T node) {
-        BSTNode<T> newNode = createNewNode(node);
+    public boolean insert(T value) {
+        BSTNode<T> newNode = createNewNode(value);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
@@ -27,7 +27,7 @@ public class BST<T extends Comparable<T>> {
         BSTNode<T> parent = null;
         while (current != null) {
             parent = current;
-            int cmp = node.compareTo(current.getValue());
+            int cmp = value.compareTo(current.getValue());
             if (cmp < 0) {
                 current = current.getLeftSon();
             } else if (cmp > 0) {
@@ -36,7 +36,7 @@ public class BST<T extends Comparable<T>> {
                 return false;
             }
         }
-        if (node.compareTo(parent.getValue()) < 0) {
+        if (value.compareTo(parent.getValue()) < 0) {
             parent.setLeftSon(newNode);
         } else {
             parent.setRightSon(newNode);
@@ -46,10 +46,10 @@ public class BST<T extends Comparable<T>> {
         return true;
     }
 
-    public T search(T node) {
+    public T search(T value) {
         BSTNode<T> current = this.root;
         while (current != null) {
-            int cmp = node.compareTo(current.getValue());
+            int cmp = value.compareTo(current.getValue());
             if (cmp == 0) {
                 return current.getValue();
             } else if (cmp < 0) {

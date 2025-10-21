@@ -140,7 +140,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
         }
     }
 
-    public void rotateRight(AVLNode<T> current) {
+    private void rotateRight(AVLNode<T> current) {
         if (current == null) return;
         AVLNode<T> parent = (AVLNode<T>) current.getParent();
         if (parent == null) return;
@@ -161,7 +161,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
         updateHeight(current);
     }
 
-    public void rotateLeft(AVLNode<T> current) {
+    private void rotateLeft(AVLNode<T> current) {
         if (current == null) return;
         AVLNode<T> parent = (AVLNode<T>) current.getParent();
         if (parent == null) return;
@@ -182,7 +182,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
         updateHeight(current);
     }
 
-    public void rotateLeftRight(AVLNode<T> current) {
+    private void rotateLeftRight(AVLNode<T> current) {
         if (current == null) return;
 
         AVLNode<T> parent = (AVLNode<T>) current.getParent();
@@ -195,7 +195,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
         rotateRight(current);
     }
 
-    public void rotateRightLeft(AVLNode<T> current) {
+    private void rotateRightLeft(AVLNode<T> current) {
         if (current == null) return;
 
         AVLNode<T> parent = (AVLNode<T>) current.getParent();

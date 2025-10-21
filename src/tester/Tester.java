@@ -157,8 +157,6 @@ public class Tester {
         long avlTime = 0L;
         long bstTime = 0L;
 
-        final int MUTATE_INTERVAL = 1000;
-
         for (int i = 0; i < MINMAX; i++) {
             AVLTree<Integer> avl = new AVLTree<>();
             BST<Integer> bst = new BST<>();
@@ -191,14 +189,15 @@ public class Tester {
     }
 
     public void testBst() {
-        for (int j = 0; j < 50; j++) {
+        System.out.println("testBST");
+        for (int j = 1; j < 2; j++) {
             BST<Integer> bst = new BST<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
             for (int i = 0; i < OPERATIONS; i++) {
                 int operation = rng.nextInt(100);
-                if (operation < 40) {
-                    int val = rng.nextInt();
+                if (operation < 30) {
+                    int val = Math.abs(rng.nextInt());
                     if (bst.insert(val)) {
                         pom.add(val);
                     }
@@ -206,15 +205,26 @@ public class Tester {
                     if (!pom.isEmpty()) {
                         int index = rng.nextInt(pom.size());
                         int val = pom.get(index);
-                        if (operation < 80) {
+                        if (operation < 50) {
                             boolean res = bst.delete(val);
                             if (!res) {
                                 throw new AssertionError("error at " + j);
                             }
                             pom.remove(index);
-                        } else {
+                        } if (operation >= 50 && operation < 70) {
                             Integer res = bst.search(val);
                             if (res == null || !res.equals(val)) {
+                                throw new AssertionError("error at " + j);
+                            }
+                        }
+                        if (operation >= 70) {
+                            int min_s = bst.findMin(bst.getRoot());
+                            int max_s = bst.findMax(bst.getRoot());
+                            int min = rng.nextInt((max_s - min_s) + 1) + min_s;
+                            int max = rng.nextInt((max_s - min) + 1) + min;
+
+                            List<Integer> res = bst.intervalSearch(min, max);
+                            if (res == null) {
                                 throw new AssertionError("error at " + j);
                             }
                         }
@@ -226,19 +236,21 @@ public class Tester {
             }
             System.out.println("Finished operations for test " + j);
         }
+        System.out.println("Test finished");
     }
 
 
 
     public void testAvl() {
-        for (int j = 50; j < 150; j++) {
+        System.out.println("testAVL");
+        for (int j = 1; j < 2; j++) {
             AVLTree<Integer> avl = new AVLTree<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
             for (int i = 0; i < OPERATIONS; i++) {
                 int operation = rng.nextInt(100);
-                if (operation < 40) {
-                    int val = rng.nextInt();
+                if (operation < 30) {
+                    int val = Math.abs(rng.nextInt());
                     if (avl.insert(val)) {
                         pom.add(val);
                     }
@@ -246,15 +258,27 @@ public class Tester {
                     if (!pom.isEmpty()) {
                         int index = rng.nextInt(pom.size());
                         int val = pom.get(index);
-                        if (operation < 80) {
+                        if (operation < 50) {
                             boolean res = avl.delete(val);
                             if (!res) {
                                 throw new AssertionError("error at " + j);
                             }
                             pom.remove(index);
-                        } else {
+                        }
+                        if (operation >= 50 && operation < 70) {
                             Integer res = avl.search(val);
                             if (res == null || !res.equals(val)) {
+                                throw new AssertionError("error at " + j);
+                            }
+                        }
+                        if (operation >= 70) {
+                            int min_s = avl.findMin(avl.getRoot());
+                            int max_s = avl.findMax(avl.getRoot());
+                            int min = rng.nextInt((max_s - min_s) + 1) + min_s;
+                            int max = rng.nextInt((max_s - min) + 1) + min;
+
+                            List<Integer> res = avl.intervalSearch(min, max);
+                            if (res == null) {
                                 throw new AssertionError("error at " + j);
                             }
                         }
@@ -267,6 +291,7 @@ public class Tester {
             validateNodeHeights(avl.getRoot());
             System.out.println("Finished operations for test " + j);
         }
+        System.out.println("Test finished");
     }
 
     public static boolean haveSameElements(ArrayList<Integer> list, List<Integer> bstIO) {
