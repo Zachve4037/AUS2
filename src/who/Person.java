@@ -2,11 +2,24 @@ package who;
 
 import java.util.Date;
 
-public class Person {
+public class Person implements Comparable<Person> {
     private String name_;
     private String surname_;
     private Date birthDate_;
     private String ID_;
+
+    public Person(String id, String name, String surname, Date birthDate) {
+        this.ID_ = id;
+        this.name_ = name;
+        this.surname_ = surname;
+        this.birthDate_ = birthDate;
+    }
+
+    @Override
+    public int compareTo(Person p) {
+        if (p == null) return 1;
+        return this.ID_.compareTo(p.ID_);
+    }
 
     public String getName_() {
         return name_;

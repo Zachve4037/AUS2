@@ -2,7 +2,7 @@ package who;
 
 import java.time.LocalDateTime;
 
-public class PCRTest {
+public class PCRTest implements Comparable<PCRTest> {
     private LocalDateTime timeOfTest_;
     private String personID_;
     private int pcrID_;
@@ -83,5 +83,11 @@ public class PCRTest {
 
     public void setNote_(String note_) {
         this.note_ = note_;
+    }
+
+    @Override
+    public int compareTo(PCRTest o) {
+        if (o == null) return 1;
+        return Integer.compare(this.pcrID_, o.pcrID_);
     }
 }
