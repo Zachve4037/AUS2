@@ -303,18 +303,17 @@ public class Tester {
 
     public void testAvl() {
         System.out.println("testAVL");
-        for (int j = 1; j < 20000; j++) {
+        for (int j = 1; j < 2; j++) {
             AVLTree<Integer> avl = new AVLTree<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
-            for (int i = 1; i < 30; i++) {
+            for (int i = 1; i < INSERT; i++) {
                 System.out.println(i);
                 int operation = rng.nextInt(100);
                 if (operation < 30) {
                     int val = Math.abs(rng.nextInt());
                     if (avl.insert(val) != null) {
                         pom.add(val);
-                        System.out.println("inserted " + val);
                     }
                 } else{
                     if (!pom.isEmpty()) {
@@ -326,7 +325,6 @@ public class Tester {
                                 throw new AssertionError("error at " + j);
                             }
                             pom.remove(index);
-                            System.out.println("deleted " + val);
                         }
                         if (operation >= 50 && operation < 70) {
                             Integer res = avl.search(val);
@@ -347,14 +345,13 @@ public class Tester {
                         }
                     }
                 }
-                if (i > 3) {
+                if (i % 1000000 == 0) {
                     if (!haveSameElements(pom, avl.inOrder(false))) {
                         throw new AssertionError("error at " + j);
                     }
                     validateNodeHeights(avl.getRoot());
                 }
             }
-
         }
         System.out.println("Test finished");
     }

@@ -86,44 +86,26 @@ public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
 
     private void rebalance(AVLNode<T> node, boolean isInsert) {
         while (node != null) {
+            int oldFac = balanceFactor(node);
             updateHeight(node);
             int balFac = balanceFactor(node);
-
-            if (balFac > 1) {
-                AVLNode<T> left = (AVLNode<T>) node.getLeftSon();
-                int leftLeftH = height(left != null ? (AVLNode<T>) left.getLeftSon() : null);
-                int leftRightH = height(left != null ? (AVLNode<T>) left.getRightSon() : null);
-
-                if (leftLeftH >= leftRightH) {
-                    rotateRight(left);
-                } else {
-                    AVLNode<T> lr = (AVLNode<T>) (left != null ? left.getRightSon() : null);
-                    rotateLeftRight(lr);
-                }
-
-                // pri inserte môžeš skončiť, ale pri delete NIE
-                if (isInsert) return;
-            }
-            else if (balFac < -1) {
-                AVLNode<T> right = (AVLNode<T>) node.getRightSon();
-                int rightRightH = height(right != null ? (AVLNode<T>) right.getRightSon() : null);
-                int rightLeftH = height(right != null ? (AVLNode<T>) right.getLeftSon() : null);
-
-                if (rightRightH >= rightLeftH) {
-                    rotateLeft(right);
-                } else {
-                    AVLNode<T> rl = (AVLNode<T>) (right != null ? right.getLeftSon() : null);
-                    rotateRightLeft(rl);
-                }
-
-                // pri inserte môžeš skončiť, ale pri delete NIE
-                if (isInsert) return;
-            }
-            else if (!isInsert && balFac == 0) {
-                // ak mažeš a narazíš na 0 -> môžeš skončiť
+            if (oldFac == 0 && balFac != 0 && !isInsert) {
                 return;
             }
-
+            if (balFac > 1) {
+                if (height((AVLNode<T>) node.getLeftSon().getLeftSon()) >= height((AVLNode<T>) node.getLeftSon().getRightSon())) {
+                    rotateRight((AVLNode<T>) node.getLeftSon());
+                } else {
+                    rotateLeftRight((AVLNode<T>) node.getLeftSon().getRightSon());
+                }
+            }
+            if (balFac < -1) {
+                if (height((AVLNode<T>) node.getRightSon().getRightSon()) >= height((AVLNode<T>) node.getRightSon().getLeftSon())) {
+                    rotateLeft((AVLNode<T>) node.getRightSon());
+                } else {
+                    rotateRightLeft((AVLNode<T>) node.getRightSon().getLeftSon());
+                }
+            }
             node = (AVLNode<T>) node.getParent();
         }
     }
