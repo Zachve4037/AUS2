@@ -1,8 +1,8 @@
 package trees.avl;
 
-import trees.BST;
+import trees.BSTree;
 
-public class AVLTree<T extends Comparable<T>> extends BST<T> {
+public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
 
     public AVLTree() {
         super();
@@ -14,12 +14,12 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
     }
 
     @Override
-    public boolean insert(T node) {
+    public T insert(T node) {
         AVLNode<T> newNode = createNewNode(node);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
-            return true;
+            return this.root.getValue();
         }
 
         AVLNode<T> current = (AVLNode<T>) this.root;
@@ -33,7 +33,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
             } else if (cmp > 0) {
                 current = (AVLNode<T>)current.getRightSon();
             } else {
-                return false;
+                return null;
             }
         }
 
@@ -45,11 +45,11 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
         newNode.setParent(parent);
         this.nodeCount++;
         rebalance(parent);
-        return true;
+        return newNode.getValue();
     }
 
     @Override
-    public boolean delete(T value) {
+    public T delete(T value) {
         AVLNode<T> current = (AVLNode<T>) this.root;
         while (current != null) {
             int cmp = value.compareTo(current.getValue());
@@ -61,7 +61,7 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
                 break;
             }
         }
-        if (current == null) return false;
+        if (current == null) return null;
 
         if (current.getLeftSon() != null && current.getRightSon() != null) {
             AVLNode<T> successor = (AVLNode<T>) current.getRightSon();
@@ -77,10 +77,11 @@ public class AVLTree<T extends Comparable<T>> extends BST<T> {
                 : (AVLNode<T>) current.getRightSon();
 
         AVLNode<T> parent = (AVLNode<T>) current.getParent();
+        T deleted = current.getValue();
         super.replaceNode(current, replacement);
         nodeCount--;
         rebalance(parent);
-        return true;
+        return deleted;
     }
 
     private void rebalance(AVLNode<T> node) {

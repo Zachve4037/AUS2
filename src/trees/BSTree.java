@@ -2,11 +2,11 @@ package trees;
 
 import java.util.*;
 
-public class BST<T extends Comparable<T>> {
+public class BSTree<T extends Comparable<T>> {
     protected int nodeCount;
     protected BSTNode<T> root;
 
-    public BST() {
+    public BSTree() {
         this.nodeCount = 0;
         this.root = null;
     }
@@ -15,12 +15,12 @@ public class BST<T extends Comparable<T>> {
         return new BSTNode<>(value);
     }
 
-    public boolean insert(T value) {
+    public T insert(T value) {
         BSTNode<T> newNode = createNewNode(value);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
-            return true;
+            return this.root.getValue();
         }
 
         BSTNode<T> current = this.root;
@@ -33,7 +33,7 @@ public class BST<T extends Comparable<T>> {
             } else if (cmp > 0) {
                 current = current.getRightSon();
             } else {
-                return false;
+                return null;
             }
         }
         if (value.compareTo(parent.getValue()) < 0) {
@@ -43,7 +43,7 @@ public class BST<T extends Comparable<T>> {
         }
         newNode.setParent(parent);
         this.nodeCount++;
-        return true;
+        return newNode.getValue();
     }
 
     public T search(T value) {
@@ -61,7 +61,7 @@ public class BST<T extends Comparable<T>> {
         return null;
     }
 
-    public boolean delete(T value) {
+    public T delete(T value) {
         BSTNode<T> current = this.root;
         while (current != null) {
             int cmp = value.compareTo(current.getValue());
@@ -73,7 +73,7 @@ public class BST<T extends Comparable<T>> {
                 break;
             }
         }
-        if (current == null) return false;
+        if (current == null) return null;
 
         if (current.getLeftSon() != null && current.getRightSon() != null) {
             BSTNode<T> successor = current.getRightSon();
@@ -88,13 +88,15 @@ public class BST<T extends Comparable<T>> {
                 ? current.getLeftSon()
                 : current.getRightSon();
 
+        T deleted= current.getValue();
+
         replaceNode(current, replacement);
 
         nodeCount--;
-        return true;
+        return deleted;
     }
 
-    public void replaceNode(BSTNode<T> target, BSTNode<T> replacement) {
+    protected void replaceNode(BSTNode<T> target, BSTNode<T> replacement) {
         if (replacement != null) {
             replacement.setParent(target.getParent());
         }
@@ -109,32 +111,29 @@ public class BST<T extends Comparable<T>> {
         }
     }
 
-    public void setRoot(BSTNode<T> root) {
-        this.root = root;
-    }
-
     public List<T> intervalSearch(T low, T high) {
         List<T> res = new LinkedList<>();
-        List<BSTNode<T>> stack = new LinkedList<>();
+
         BSTNode<T> current = this.root;
-        while(current != null || !stack.isEmpty()) {
-            while(current != null) {
-                stack.add(current);
+        BSTNode<T> pom = null;
+
+        while (current != null) {
+            int cmp = low.compareTo(current.getValue());
+            if (cmp <= 0) {
+                pom = current;
                 current = current.getLeftSon();
+            } else {
+                current = current.getRightSon();
             }
-            current = stack.removeLast();
-            T val = current.getValue();
-
-            if (val.compareTo(low) >= 0 && val.compareTo(high) <= 0) {
-                res.add(val);
-            }
-
-            if (val.compareTo(high) > 0) {
-                break;
-            }
-
-            current = current.getRightSon();
         }
+
+        current = pom;
+        while (current != null) {
+            if (current.getValue().compareTo(high) > 0) break;
+            res.add(current.getValue());
+            current = traverseInOrder(current);
+        }
+
         return res;
     }
 
@@ -151,18 +150,32 @@ public class BST<T extends Comparable<T>> {
 
     protected List<BSTNode<T>> innerInOrder(BSTNode<T> startNode) {
         List<BSTNode<T>> res = new LinkedList<>();
-        List<BSTNode<T>> stack = new LinkedList<>();
+
         BSTNode<T> current = startNode;
-        while (current != null || !stack.isEmpty()) {
-            while(current != null) {
-                stack.add(current);
-                current = current.getLeftSon();
-            }
-            current = stack.removeLast();
+        while (current.getLeftSon() != null) {
+            current = current.getLeftSon();
+        }
+
+        while (current != null) {
             res.add(current);
-            current = current.getRightSon();
+            current = traverseInOrder(current);
         }
         return res;
+    }
+
+    private BSTNode<T> traverseInOrder(BSTNode<T> current) {
+        if (current.getRightSon() != null) {
+            current = current.getRightSon();
+            while (current.getLeftSon() != null) {
+                current = current.getLeftSon();
+            }
+        } else {
+            while (current.getParent() != null && current == current.getParent().getRightSon()) {
+                current = current.getParent();
+            }
+            current = current.getParent();
+        }
+        return current;
     }
 
     public T findMin(BSTNode<T> startNode) {
@@ -195,5 +208,9 @@ public class BST<T extends Comparable<T>> {
 
     public BSTNode<T> getRoot() {
         return this.root;
+    }
+
+    protected void setRoot(BSTNode<T> root) {
+        this.root = root;
     }
 }

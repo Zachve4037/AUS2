@@ -4,10 +4,13 @@ namerat ako rychlo nieco ta struktura robit
 test na vsetky public operacie, spravne pomocou pomocnej struktury
 min max podla zadania z cvika
 
-to co insertnem, to dostanem
-ziaden node, iba value, ziaden stack, rebalance
+rebalance
 spravit si level order travers
 
+
+-ziaden node, iba value
+-to co insertnem, to dostanem
+-ziaden stack
 ----------------------------------------------------------------------------------
 
 nakreslit si DB, na zaklade toho spocitat zlozitosti operacii

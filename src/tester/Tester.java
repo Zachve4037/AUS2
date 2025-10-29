@@ -1,7 +1,6 @@
 package tester;
 
-import com.sun.source.tree.Tree;
-import trees.BST;
+import trees.BSTree;
 import trees.BSTNode;
 import trees.avl.AVLNode;
 import trees.avl.AVLTree;
@@ -21,7 +20,7 @@ public class Tester {
 
     public void testAvlBstInsert() {
         AVLTree<Integer> avl = new AVLTree<>();
-        BST<Integer> bst = new BST<>();
+        BSTree<Integer> bst = new BSTree<>();
         TreeSet<Integer> set = new TreeSet<>();
 
         long avlTime = 0L;
@@ -54,14 +53,14 @@ public class Tester {
 
     public void testAvlBstDelete() {
         AVLTree<Integer> avl = new AVLTree<>();
-        BST<Integer> bst = new BST<>();
+        BSTree<Integer> bst = new BSTree<>();
         TreeSet<Integer> set = new TreeSet<>();
         ArrayList<Integer> pom = new ArrayList<>();
         Random rng = new Random();
 
         for (int i = 0; i < INSERT; i++) {
             int val = rng.nextInt();
-            if (avl.insert(val)) {
+            if (avl.insert(val) != null) {
                 bst.insert(val);
                 pom.add(val);
                 set.add(val);
@@ -100,14 +99,14 @@ public class Tester {
 
     public void testAvlBstSearch() {
         AVLTree<Integer> avl = new AVLTree<>();
-        BST<Integer> bst = new BST<>();
+        BSTree<Integer> bst = new BSTree<>();
         TreeSet<Integer> set = new TreeSet<>();
         ArrayList<Integer> pom = new ArrayList<>();
         Random rng = new Random();
 
         for (int i = 0; i < INSERT; i++) {
             int val = rng.nextInt();
-            if (avl.insert(val)) {
+            if (avl.insert(val) != null) {
                 bst.insert(val);
                 pom.add(val);
                 set.add(val);
@@ -145,7 +144,7 @@ public class Tester {
 
     public void testAvlBstInterval() {
         AVLTree<Integer> avl = new AVLTree<>();
-        BST<Integer> bst = new BST<>();
+        BSTree<Integer> bst = new BSTree<>();
         TreeSet<Integer> set = new TreeSet<>();
         ArrayList<Integer> pom = new ArrayList<>();
         Random rng = new Random();
@@ -194,13 +193,13 @@ public class Tester {
         long setTime = 0L;
 
         AVLTree<Integer> avl = new AVLTree<>();
-        BST<Integer> bst = new BST<>();
+        BSTree<Integer> bst = new BSTree<>();
         TreeSet<Integer> set = new TreeSet<>();
         ArrayList<Integer> pom = new ArrayList<>();
         Random rng = new Random();
         for (int i = 0; i < INSERT; i++) {
             int val = rng.nextInt();
-            if (avl.insert(val)) {
+            if (avl.insert(val) != null) {
                 bst.insert(val);
                 set.add(val);
                 pom.add(val);
@@ -209,7 +208,7 @@ public class Tester {
         for (int i = 0; i < MINMAX; i++) {
             for (int j = 0; j < 10_000; j++) {
                 int val = rng.nextInt();
-                if (avl.insert(val)) {
+                if (avl.insert(val) != null) {
                     bst.insert(val);
                     set.add(val);
                     pom.add(val);
@@ -252,14 +251,14 @@ public class Tester {
     public void testBst() {
         System.out.println("testBST");
         for (int j = 1; j < 2; j++) {
-            BST<Integer> bst = new BST<>();
+            BSTree<Integer> bst = new BSTree<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
             for (int i = 0; i < OPERATIONS; i++) {
                 int operation = rng.nextInt(100);
                 if (operation < 30) {
                     int val = Math.abs(rng.nextInt());
-                    if (bst.insert(val)) {
+                    if (bst.insert(val) != null) {
                         pom.add(val);
                     }
                 } else{
@@ -267,8 +266,8 @@ public class Tester {
                         int index = rng.nextInt(pom.size());
                         int val = pom.get(index);
                         if (operation < 50) {
-                            boolean res = bst.delete(val);
-                            if (!res) {
+                            Integer res = bst.delete(val);
+                            if (res == null) {
                                 throw new AssertionError("error at " + j);
                             }
                             pom.remove(index);
@@ -312,7 +311,7 @@ public class Tester {
                 int operation = rng.nextInt(100);
                 if (operation < 30) {
                     int val = Math.abs(rng.nextInt());
-                    if (avl.insert(val)) {
+                    if (avl.insert(val) != null) {
                         pom.add(val);
                     }
                 } else{
@@ -320,8 +319,8 @@ public class Tester {
                         int index = rng.nextInt(pom.size());
                         int val = pom.get(index);
                         if (operation < 50) {
-                            boolean res = avl.delete(val);
-                            if (!res) {
+                            Integer res = avl.delete(val);
+                            if (res == null) {
                                 throw new AssertionError("error at " + j);
                             }
                             pom.remove(index);
