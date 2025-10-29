@@ -150,6 +150,9 @@ public class BSTree<T extends Comparable<T>> {
 
     protected List<BSTNode<T>> innerInOrder(BSTNode<T> startNode) {
         List<BSTNode<T>> res = new LinkedList<>();
+        if (startNode == null) {
+            return res;
+        }
 
         BSTNode<T> current = startNode;
         while (current.getLeftSon() != null) {
