@@ -307,7 +307,7 @@ public class Tester {
             AVLTree<Integer> avl = new AVLTree<>();
             ArrayList<Integer> pom = new ArrayList<>();
             Random rng = new Random(j);
-            for (int i = 1; i < INSERT; i++) {
+            for (int i = 1; i < OPERATIONS; i++) {
                 System.out.println(i);
                 int operation = rng.nextInt(100);
                 if (operation < 30) {
