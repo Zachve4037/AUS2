@@ -1,15 +1,17 @@
 TESTER
-tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
-namerat ako rychlo nieco ta struktura robit
-test na vsetky public operacie, spravne pomocou pomocnej struktury
-min max podla zadania z cvika
-
+pozriet s Erikom prosim
 
 -ziaden node, iba value
 -to co insertnem, to dostanem
 -ziaden stack
 -rebalance
 -spravit si level order travers
+-tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
+ namerat ako rychlo nieco ta struktura robit
+-test na vsetky public operacie, spravne pomocou pomocnej struktury
+ min max podla zadania z cvika
+ -incremental insert test
+
 ----------------------------------------------------------------------------------
 
 nakreslit si DB, na zaklade toho spocitat zlozitosti operacii
@@ -37,9 +39,6 @@ nacitanie DB zo suborov (bacha na referencie aby som nevytvaral zbytocne vela ob
 
 DOC
 - nemusi byt dlha
-- to co tam bolo (musim dorobit vsakze)
-- testovanie na nahodnych datach
-- test na BVS ked vkladam kluce ktore inkrementujeme (na mensom pocte)
 - do tabuliek
 - nakres DB_modelu
 - vycislene zlozitosti

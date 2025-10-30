@@ -149,7 +149,7 @@ public class Tester {
         ArrayList<Integer> pom = new ArrayList<>();
         Random rng = new Random();
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100000; i++) {
             pom.add(i);
         }
         Collections.shuffle(pom);
@@ -163,8 +163,8 @@ public class Tester {
         long setTime = 0L;
 
         for (int i = 0; i < INTERVAL; i++) {
-            int a = rng.nextInt() % 5000;
-            int b = a + rng.nextInt(5000);
+            int a = rng.nextInt() % (pom.size()-500);
+            int b = a + 500;
 
             long t0 = System.nanoTime();
             bst.intervalSearch(a, b);
@@ -192,21 +192,15 @@ public class Tester {
         long bstTime = 0L;
         long setTime = 0L;
 
-        AVLTree<Integer> avl = new AVLTree<>();
-        BSTree<Integer> bst = new BSTree<>();
-        TreeSet<Integer> set = new TreeSet<>();
-        ArrayList<Integer> pom = new ArrayList<>();
-        Random rng = new Random();
-        for (int i = 0; i < INSERT; i++) {
-            int val = rng.nextInt();
-            if (avl.insert(val) != null) {
-                bst.insert(val);
-                set.add(val);
-                pom.add(val);
-            }
-        }
+
+        System.out.println("Initial insertions done.");
         for (int i = 0; i < MINMAX; i++) {
-            for (int j = 0; j < 10_000; j++) {
+            AVLTree<Integer> avl = new AVLTree<>();
+            BSTree<Integer> bst = new BSTree<>();
+            TreeSet<Integer> set = new TreeSet<>();
+            ArrayList<Integer> pom = new ArrayList<>();
+            Random rng = new Random();
+            for (int k = 0; k < 10000; k++) {
                 int val = rng.nextInt();
                 if (avl.insert(val) != null) {
                     bst.insert(val);
@@ -215,32 +209,30 @@ public class Tester {
                 }
             }
 
-            for (int j = 0; j < 10_000; j++) {
-                int index = rng.nextInt(pom.size());
-                int val = pom.get(index);
-                avl.delete(val);
-                bst.delete(val);
-                set.remove(val);
-                pom.remove(index);
-            }
-
             long t0 = System.nanoTime();
-            bst.findMin(bst.getRoot());
-            bst.findMax(bst.getRoot());
+            int bst_min = bst.findMin(bst.getRoot());
+            int bst_max = bst.findMax(bst.getRoot());
             long t1 = System.nanoTime();
             bstTime += t1 - t0;
 
             long t2 = System.nanoTime();
-            avl.findMin(avl.getRoot());
-            avl.findMax(avl.getRoot());
+            int avl_min = avl.findMin(avl.getRoot());
+            int avl_max = avl.findMax(avl.getRoot());
             long t3 = System.nanoTime();
             avlTime += t3 - t2;
 
             long t4 = System.nanoTime();
-            set.first();
-            set.last();
+            int set_first = set.first();
+            int set_last = set.last();
             long t5 = System.nanoTime();
             setTime += t5 - t4;
+
+            if (bst_min != avl_min || bst_min != set_first) {
+                throw new AssertionError("Min values do not match!");
+            }
+            if (bst_max != avl_max || bst_max != set_last) {
+                throw new AssertionError("Max values do not match!");
+            }
         }
         System.out.println("for bst min/max " + bstTime / 1_000_000.0);
         System.out.println("for avl min/max " + avlTime / 1_000_000.0);
@@ -297,6 +289,37 @@ public class Tester {
             System.out.println("Finished operations for test " + j);
         }
         System.out.println("Test finished");
+    }
+
+    public void testBstAvlIncrement() {
+        long avlTime = 0L;
+        long bstTime = 0L;
+        long setTime = 0L;
+
+        System.out.println("Test bst incremental");
+        BSTree<Integer> bst = new BSTree<>();
+        AVLTree<Integer> avl = new AVLTree<>();
+        TreeSet<Integer> set = new TreeSet<>();
+        for (int i = 0; i < INSERT; i++) {
+            long t0 = System.nanoTime();
+            bst.insert(i);
+            long t1 = System.nanoTime();
+            bstTime += t1 - t0;
+
+            long t2 = System.nanoTime();
+            avl.insert(i);
+            long t3 = System.nanoTime();
+            avlTime += t3 - t2;
+
+            long t4 = System.nanoTime();
+            set.add(i);
+            long t5 = System.nanoTime();
+            setTime += t5 - t4;
+            System.out.println(i);
+        System.out.println("for bst insert " + bstTime / 1_000_000.0);
+        System.out.println("for avl insert " + avlTime / 1_000_000.0);
+        System.out.println("for treeSet insert " + setTime / 1_000_000.0);
+        }
     }
 
 
