@@ -181,6 +181,35 @@ public class BSTree<T extends Comparable<T>> {
         return current;
     }
 
+    public List<T> levelOrder(boolean print) {
+        List<T> res = new LinkedList<>();
+        for (BSTNode<T> val : innerLevelOrder(this.root)) {
+            if (print) {
+                System.out.println(val.getValue());
+            }
+            res.add(val.getValue());
+        }
+        return res;
+    }
+
+    private List<BSTNode<T>> innerLevelOrder(BSTNode<T> startNode) {
+        List<BSTNode<T>> res = new LinkedList<>();
+        if (startNode == null) return res;
+        List<BSTNode<T>> queue = new LinkedList<>();
+        queue.addLast(startNode);
+        while (!queue.isEmpty()) {
+            BSTNode<T> current = queue.removeFirst();
+            res.addLast(current);
+            if (current.getLeftSon() != null) {
+                queue.addLast(current.getLeftSon());
+            }
+            if (current.getRightSon() != null) {
+                queue.addLast(current.getRightSon());
+            }
+        }
+        return res;
+    }
+
     public T findMin(BSTNode<T> startNode) {
         if (startNode == null) {
             return null;
