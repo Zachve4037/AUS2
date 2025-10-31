@@ -4,11 +4,10 @@ import trees.avl.AVLTree;
 import who.baseClasses.PCRTest;
 import who.wrappers.PCRT_DateTime;
 
-public abstract class AdministrativeUnit implements Comparable<AdministrativeUnit> {
+public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implements Comparable<T> {
     private final int adminUnitID_;
     private AVLTree<PCRT_DateTime> tests;
     private AVLTree<PCRT_DateTime> positiveTests;
-
 
     public AdministrativeUnit(int districtID) {
         this.adminUnitID_ = districtID;
@@ -39,10 +38,8 @@ public abstract class AdministrativeUnit implements Comparable<AdministrativeUni
     }
 
     @Override
-    public int compareTo(AdministrativeUnit o) {
+    public int compareTo(T o) {
         if (o == null) return 1;
         return Integer.compare(this.adminUnitID_, o.getDistrictID());
     }
-
 }
-
