@@ -45,3 +45,47 @@ DOC
 - UML diagram tried
 - strucny popis AVL, popis metod
 - popis architektury velmi strucne (pochvalit sa ak je nieco KURRRRRRRWA dobre)
+
+PCRDatabase
+│
+├─ AVLTree<Person> osoby
+│    ├─ Person(rodneCislo="123456/7890", meno="Anna")
+│    │     └─ AVLTree<PCRTest> testy osoby
+│    │          ├─ PCRTest(kodTestu=101, datum=2025-01-10)
+│    │          └─ PCRTest(kodTestu=102, datum=2025-02-05)
+│    │
+│    └─ Person(rodneCislo="987654/3210", meno="Peter")
+│          └─ AVLTree<PCRTest> testy osoby
+│               └─ PCRTest(kodTestu=103, datum=2025-03-15)
+│
+├─ AVLTree<PCRTest> testy
+│    ├─ PCRTest(kodTestu=101, pac=Anna)
+│    ├─ PCRTest(kodTestu=102, pac=Anna)
+│    └─ PCRTest(kodTestu=103, pac=Peter)
+│
+├─ AVLTree<AVLTree<PCRTest>> okresy
+│    ├─ okres=1
+│    │     └─ AVLTree<PCRTest>
+│    │           ├─ PCRTest(kodTestu=101)
+│    │           └─ PCRTest(kodTestu=103)
+│    │
+│    └─ okres=2
+│          └─ AVLTree<PCRTest>
+│                └─ PCRTest(kodTestu=102)
+│
+├─ AVLTree<AVLTree<PCRTest>> kraje
+│    └─ kraj=10
+│          └─ AVLTree<PCRTest>
+│                ├─ PCRTest(kodTestu=101)
+│                ├─ PCRTest(kodTestu=102)
+│                └─ PCRTest(kodTestu=103)
+│
+└─ AVLTree<AVLTree<PCRTest>> pracoviska
+     ├─ pracovisko=100
+     │     └─ AVLTree<PCRTest>
+     │           ├─ PCRTest(kodTestu=101)
+     │           └─ PCRTest(kodTestu=102)
+     │
+     └─ pracovisko=101
+           └─ AVLTree<PCRTest>
+                 └─ PCRTest(kodTestu=103)
