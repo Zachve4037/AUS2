@@ -14,8 +14,8 @@ public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
     }
 
     @Override
-    public T insert(T node) {
-        AVLNode<T> newNode = createNewNode(node);
+    public T insert(T value) {
+        AVLNode<T> newNode = createNewNode(value);
         if (this.root == null) {
             this.setRoot(newNode);
             this.nodeCount++;
@@ -27,7 +27,7 @@ public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
 
         while (current != null) {
             parent = current;
-            int cmp = node.compareTo(current.getValue());
+            int cmp = value.compareTo(current.getValue());
             if (cmp < 0) {
                 current = (AVLNode<T>)current.getLeftSon();
             } else if (cmp > 0) {
@@ -37,7 +37,7 @@ public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
             }
         }
 
-        if (node.compareTo(parent.getValue()) < 0) {
+        if (value.compareTo(parent.getValue()) < 0) {
             parent.setLeftSon(newNode);
         } else {
             parent.setRightSon(newNode);
