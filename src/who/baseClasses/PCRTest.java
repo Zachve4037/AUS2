@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class PCRTest implements Comparable<PCRTest> {
     private LocalDateTime timeOfTest_;
     private String personID_;
-    private Person preson_;
+    private Person person_;
     private int pcrID_;
     private int workplaceID_;
     private int regionID_;
@@ -14,7 +14,7 @@ public class PCRTest implements Comparable<PCRTest> {
     private double testValue_;
     private String note_;
 
-    PCRTest(LocalDateTime time,
+    public PCRTest(LocalDateTime time,
             String id,
             int pcrId,
             int workplaceId,
@@ -113,12 +113,12 @@ public class PCRTest implements Comparable<PCRTest> {
         return Integer.compare(this.pcrID_, o.pcrID_);
     }
 
-    public Person getPreson_() {
-        return preson_;
+    public Person getPerson() {
+        return person_;
     }
 
-    public void setPreson_(Person preson_) {
-        this.preson_ = preson_;
+    public void setPerson(Person preson_) {
+        this.person_ = preson_;
     }
 
     public static PCRTest keyToTest(int id) {

@@ -4,6 +4,7 @@ import trees.avl.AVLTree;
 import who.wrappers.PCRT_DateTime;
 
 import java.util.Date;
+import java.util.List;
 
 import static who.baseClasses.PCRTest.keyToTest;
 
@@ -83,5 +84,9 @@ public class Person implements Comparable<Person> {
 
     public PCRTest getTestByID(int testId) {
         return this.pcrTestsById_.search(keyToTest(testId));
+    }
+
+    public List<PCRT_DateTime> getAllTestsByDate() {
+        return this.pcrTestsByDate_.inOrder(false);
     }
 }

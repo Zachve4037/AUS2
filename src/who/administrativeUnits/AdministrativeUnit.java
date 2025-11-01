@@ -4,18 +4,21 @@ import trees.avl.AVLTree;
 import who.baseClasses.PCRTest;
 import who.wrappers.PCRT_DateTime;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implements Comparable<T> {
     private final int adminUnitID_;
     private AVLTree<PCRT_DateTime> tests;
     private AVLTree<PCRT_DateTime> positiveTests;
 
-    public AdministrativeUnit(int districtID) {
-        this.adminUnitID_ = districtID;
+    public AdministrativeUnit(int ID) {
+        this.adminUnitID_ = ID;
         this.tests = new AVLTree<>();
         this.positiveTests = new AVLTree<>();
     }
 
-    public int getDistrictID() {
+    public int getID() {
         return this.adminUnitID_;
     }
 
@@ -37,9 +40,24 @@ public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implem
         }
     }
 
+    public List<PCRT_DateTime> getTestsInInterval(LocalDateTime from, LocalDateTime to, boolean positive) {
+        if (from == null || to == null) return null;
+        PCRT_DateTime testFrom = new PCRT_DateTime(
+                new PCRTest(from, null, Integer.MIN_VALUE,0,0,0,false,0.0,"")
+        );
+        PCRT_DateTime testTo = new PCRT_DateTime(
+                new PCRTest(to, null, Integer.MAX_VALUE, 0, 0, 0, false, 0.0, "")
+        );
+        if (positive) {
+            return this.positiveTests.intervalSearch(testFrom, testTo);
+        } else {
+            return this.tests.intervalSearch(testFrom, testTo);
+        }
+    }
+
     @Override
     public int compareTo(T o) {
         if (o == null) return 1;
-        return Integer.compare(this.adminUnitID_, o.getDistrictID());
+        return Integer.compare(this.adminUnitID_, o.getID());
     }
 }

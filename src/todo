@@ -10,15 +10,18 @@ pozriet s Erikom prosim
  namerat ako rychlo nieco ta struktura robit
 -test na vsetky public operacie, spravne pomocou pomocnej struktury
  min max podla zadania z cvika
- -incremental insert test
-
+-incremental insert test
+- 1) vlozenie vysleku do DB
+- 2) vyhladanie testu pre osobu podla RC a testID
+- 3) vyhladanie vsetkych testov pre osobu podla RC
+- 4), 5), 6), 7) 17) vyhladanie testov pre Admininstrativnu jednotku
+- 8), 9) vyhladanie testov zo vsetkych
 ----------------------------------------------------------------------------------
 
 nakreslit si DB, na zaklade toho spocitat zlozitosti operacii
 generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
 10 - 12 aj ak su duplicitne osoby
 operacie si mozem pridat a dodefinovat
-nesetrit stromami
 
 GUI
 - aby to komunikovalo s DB
