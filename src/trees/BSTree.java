@@ -245,4 +245,8 @@ public class BSTree<T extends Comparable<T>> {
     protected void setRoot(BSTNode<T> root) {
         this.root = root;
     }
+
+    public int getNodeCount() {
+        return this.nodeCount;
+    }
 }

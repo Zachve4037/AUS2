@@ -74,13 +74,20 @@ public class Person implements Comparable<Person> {
     public void addTest(PCRTest test) {
         this.pcrTestsByDate_.insert(new PCRT_DateTime(test));
         this.pcrTestsById_.insert(test);
+        test.setPerson(this);
+        test.setPersonID(this.ID_);
     }
 
     public void deleteTest(PCRTest test) {
+        if (test == null) return;
         this.pcrTestsByDate_.delete(new PCRT_DateTime(test));
         this.pcrTestsById_.delete(test);
-    }
 
+        if (test.getPerson() == this) {
+            test.setPerson(null);
+            test.setPersonID("");
+        }
+    }
 
     public PCRTest getTestByID(int testId) {
         return this.pcrTestsById_.search(keyToTest(testId));
