@@ -4,6 +4,7 @@ import who.Exportable;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
     private static final long serialVersionUID = 1L;
@@ -39,17 +40,27 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
         this.note_ = note;
     }
 
-    public void printTestInfo() {
-        System.out.println("PCR Test ID: " + this.pcrID_);
-        System.out.println("Person ID: " + this.personID_);
-        System.out.println("Time of Test: " + this.timeOfTest_);
-        System.out.println("Workplace ID: " + this.workplaceID_);
-        System.out.println("Region ID: " + this.regionID_);
-        System.out.println("District ID: " + this.districtID_);
-        System.out.println("Test Result: " + (this.result_ ? "Positive" : "Negative"));
-        System.out.println("Test Value: " + this.testValue_);
-        System.out.println("Note: " + this.note_);
-        this.person_.printPersonInfo();
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("TestID=").append(this.pcrID_)
+                .append(" PersonID=").append(this.personID_)
+                .append(" Time=").append(this.timeOfTest_)
+                .append(" Result=").append(this.result_ ? "Positive" : "Negative")
+                .append(" WorkplaceID=").append(this.workplaceID_)
+                .append(" RegionID=").append(this.regionID_)
+                .append(" DistrictID=").append(this.districtID_)
+                .append(" Value=").append(this.testValue_)
+                .append(" Note=").append(this.note_)
+                .append(" !!!END OF TESTS INFO!!! ");
+        if (this.person_ != null) {
+            sb.append(" [Person: ID=").append(this.person_.getID())
+                    .append(" Name=").append(this.person_.getName())
+                    .append(" Surname=").append(this.person_.getSurname())
+                    .append(" Birth=").append(this.person_.getBirthDate())
+                    .append("]");
+        }
+        return sb.toString();
     }
 
     public LocalDateTime getTimeOfTest() {
@@ -75,17 +86,53 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
 
     @Override
     public void deserialize(String data) {
-        String[] parts = data.split(";");
-        if (parts.length == 9) {
-            this.timeOfTest_ = LocalDateTime.parse(parts[0]);
+        String[] parts = data.split(";", -1);
+        if (parts.length >= 9) {
+            try {
+                this.timeOfTest_ = parts[0].isEmpty() ? null : LocalDateTime.parse(parts[0]);
+            } catch (Exception e) {
+                this.timeOfTest_ = null;
+            }
+
             this.personID_ = parts[1];
-            this.pcrID_ = Integer.parseInt(parts[2]);
-            this.workplaceID_ = Integer.parseInt(parts[3]);
-            this.regionID_ = Integer.parseInt(parts[4]);
-            this.districtID_ = Integer.parseInt(parts[5]);
+
+            try {
+                this.pcrID_ = Integer.parseInt(parts[2]);
+            } catch (NumberFormatException e) {
+                this.pcrID_ = 0;
+            }
+
+            try {
+                this.workplaceID_ = Integer.parseInt(parts[3]);
+            } catch (NumberFormatException e) {
+                this.workplaceID_ = 0;
+            }
+
+            try {
+                this.regionID_ = Integer.parseInt(parts[4]);
+            } catch (NumberFormatException e) {
+                this.regionID_ = 0;
+            }
+
+            try {
+                this.districtID_ = Integer.parseInt(parts[5]);
+            } catch (NumberFormatException e) {
+                this.districtID_ = 0;
+            }
+
             this.result_ = Boolean.parseBoolean(parts[6]);
-            this.testValue_ = Double.parseDouble(parts[7]);
-            this.note_ = parts[8];
+
+            try {
+                this.testValue_ = Double.parseDouble(parts[7]);
+            } catch (NumberFormatException e) {
+                this.testValue_ = 0.0;
+            }
+
+            if (parts.length == 9) {
+                this.note_ = parts[8];
+            } else {
+                this.note_ = String.join(";", Arrays.copyOfRange(parts, 8, parts.length));
+            }
         }
     }
 

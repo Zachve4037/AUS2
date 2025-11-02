@@ -4,10 +4,14 @@ import who.administrativeUnits.District;
 import who.administrativeUnits.Region;
 import who.baseClasses.*;
 import who.wrappers.PCRT_DateTime;
+
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface IDatabaseService {
+    void importFromFile(String peoplePath, String testsPath) throws IOException;
+    void exportToFile(String peoplePath, String testsPath) throws IOException;
 
     Person addPerson(Person person); //19
     void deletePerson(String personID); //21

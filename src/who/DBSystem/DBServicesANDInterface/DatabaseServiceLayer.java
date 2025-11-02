@@ -7,6 +7,7 @@ import who.baseClasses.PCRTest;
 import who.baseClasses.Person;
 import who.wrappers.PCRT_DateTime;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,16 @@ public class DatabaseServiceLayer implements IDatabaseService {
             }
         }
         return instance;
+    }
+
+    @Override
+    public void importFromFile(String peoplePath, String testsPath) throws IOException {
+        this.db_.importFromFiles(peoplePath, testsPath);
+    }
+
+    @Override
+    public void exportToFile(String peoplePath, String testsPath) throws IOException {
+        this.db_.exportToFiles(peoplePath, testsPath);
     }
 
     @Override

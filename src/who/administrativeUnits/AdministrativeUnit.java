@@ -62,4 +62,9 @@ public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implem
         if (o == null) return 1;
         return Integer.compare(this.adminUnitID_, o.getID());
     }
+
+    @Override
+    public String toString() {
+        return Integer.toString(this.adminUnitID_);
+    }
 }
