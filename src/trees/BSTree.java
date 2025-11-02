@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import who.Exportable;
 
-public class BSTree<T extends Comparable<T> & Exportable> {
+public class BSTree<T extends Comparable<T>> {
     protected int nodeCount;
     protected BSTNode<T> root;
 
@@ -244,11 +244,14 @@ public class BSTree<T extends Comparable<T> & Exportable> {
     public void exportToFile(String filePath) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (T value : this.inOrder(false)) {
-                writer.write(value.serialize());
+                if (value == null) continue;
+                if (value instanceof Exportable) {
+                    writer.write(((Exportable) value).serialize());
+                } else {
+                    writer.write(value.toString());
+                }
                 writer.newLine();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -258,12 +261,15 @@ public class BSTree<T extends Comparable<T> & Exportable> {
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) continue;
                 T obj = factory.get();
-                obj.deserialize(line);
-                this.insert(obj);
+                if (obj instanceof Exportable) {
+                    ((Exportable) obj).deserialize(line);
+                    this.insert(obj);
+                } else {
+                    continue;
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

@@ -1,16 +1,13 @@
-TESTER
-pozriet s Erikom prosim
-
--ziaden node, iba value
--to co insertnem, to dostanem
--ziaden stack
--rebalance
--spravit si level order travers
--tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
- namerat ako rychlo nieco ta struktura robit
--test na vsetky public operacie, spravne pomocou pomocnej struktury
- min max podla zadania z cvika
--incremental insert test
+- ziaden node, iba value
+- to co insertnem, to dostanem
+- ziaden stack
+- rebalance
+- spravit si level order travers
+- tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
+  namerat ako rychlo nieco ta struktura robit
+- test na vsetky public operacie, spravne pomocou pomocnej struktury
+  min max podla zadania z cvika
+- incremental insert test
 - 1) vlozenie vysleku do DB
 - 2) vyhladanie testu pre osobu podla RC a testID
 - 3) vyhladanie vsetkych testov pre osobu podla RC
@@ -21,38 +18,32 @@ pozriet s Erikom prosim
 - 14)
 - ...
 - 21)
+- musi sa to dat ulozit do suborov / suboru (hardcodnut)
+- podpora na ukladanie do suboru na BVS
+- instancia z DB sa nesmie dostat do GUI
+- moznost spravit viacero GUI na jednu DB - singleton
+- 10 - 12 aj ak su duplicitne osoby - fuck it, su filtrovane
+- nakres DB_modelu
+- nacitanie DB zo suborov (bacha na referencie aby som nevytvaral zbytocne vela objektov)
 
 ----------------------------------------------------------------------------------
 
-nakreslit si DB, na zaklade toho spocitat zlozitosti operacii
-generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
-10 - 12 aj ak su duplicitne osoby
-operacie si mozem pridat a dodefinovat
-
 GUI
-- aby to komunikovalo s DB
-- instancia z DB sa nesmie dostat do GUI
-- moznost spravit viacero GUI na jednu DB
-- pouzit nieco ako MVC, observer, ...
+- aby to komunikovalo s DatabaseServiceLayer
 - nestracat cas z GUI
 
-
 GENERATOR ZAZNAMOV DB
+- generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
 - na gui nejake tlacidlo na naplnenie DB, moznost zadat pocty (okresy, pouzivatelia)
 - nahodne vstupy
-- musi sa to dat ulozit do suborov / suboru (hardcodnut)
-
-podpora na ukladanie do suboru na BVS
-nacitanie DB zo suborov (bacha na referencie aby som nevytvaral zbytocne vela objektov)
-
 
 DOC
 - nemusi byt dlha
 - do tabuliek
-- nakres DB_modelu
 - vycislene zlozitosti
 - UML diagram tried
 - strucny popis AVL, popis metod
+- nakreslit si DB, na zaklade toho spocitat zlozitosti operacii
 - popis architektury velmi strucne (pochvalit sa ak je nieco KURRRRRRRWA dobre)
 
 PCRDatabase

@@ -1,11 +1,12 @@
 package who.wrappers;
 
+import who.Exportable;
 import who.baseClasses.PCRTest;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class PCRT_DateTime implements Comparable<PCRT_DateTime>, Serializable {
+public class PCRT_DateTime implements Comparable<PCRT_DateTime>, Serializable, Exportable {
     private static final long serialVersionUID = 1L;
     private final PCRTest test;
 
@@ -29,5 +30,15 @@ public class PCRT_DateTime implements Comparable<PCRT_DateTime>, Serializable {
         if (other == null) return 1;
         int cmp = self.compareTo(other);
         return (cmp != 0) ? cmp : this.test.compareTo(o.getTest());
+    }
+
+    @Override
+    public String serialize() {
+        return this.test.serialize();
+    }
+
+    @Override
+    public void deserialize(String data) {
+        this.test.deserialize(data);
     }
 }
