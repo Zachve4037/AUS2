@@ -62,35 +62,35 @@ public class Person implements Comparable<Person>, Serializable, Exportable {
         }
     }
 
-    public String getName_() {
+    public String getName() {
         return name_;
     }
 
-    public void setName_(String name_) {
+    public void setName(String name_) {
         this.name_ = name_;
     }
 
-    public String getSurname_() {
+    public String getSurname() {
         return surname_;
     }
 
-    public void setSurname_(String surname_) {
+    public void setSurname(String surname_) {
         this.surname_ = surname_;
     }
 
-    public Date getBirthDate_() {
+    public Date getBirthDate() {
         return birthDate_;
     }
 
-    public void setBirthDate_(Date birthDate_) {
+    public void setBirthDate(Date birthDate_) {
         this.birthDate_ = birthDate_;
     }
 
-    public String getID_() {
+    public String getID() {
         return ID_;
     }
 
-    public void setID_(String ID_) {
+    public void setID(String ID_) {
         this.ID_ = ID_;
     }
 

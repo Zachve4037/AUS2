@@ -25,12 +25,10 @@
 - 10 - 12 aj ak su duplicitne osoby - fuck it, su filtrovane
 - nakres DB_modelu
 - nacitanie DB zo suborov (bacha na referencie aby som nevytvaral zbytocne vela objektov)
+- aby to komunikovalo s DatabaseServiceLayer
+- GUI
 
 ----------------------------------------------------------------------------------
-
-GUI
-- aby to komunikovalo s DatabaseServiceLayer
-- nestracat cas z GUI
 
 GENERATOR ZAZNAMOV DB
 - generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
@@ -39,7 +37,6 @@ GENERATOR ZAZNAMOV DB
 
 DOC
 - nemusi byt dlha
-- do tabuliek
 - vycislene zlozitosti
 - UML diagram tried
 - strucny popis AVL, popis metod

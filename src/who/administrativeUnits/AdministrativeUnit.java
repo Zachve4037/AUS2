@@ -45,7 +45,7 @@ public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implem
     public List<PCRT_DateTime> getTestsInInterval(LocalDateTime from, LocalDateTime to, boolean positive) {
         if (from == null || to == null) return null;
         PCRT_DateTime testFrom = new PCRT_DateTime(
-                new PCRTest(from, null, Integer.MIN_VALUE,0,0,0,false,0.0,"")
+                new PCRTest(from, null, Integer.MIN_VALUE, 0, 0, 0,false,0.0, "")
         );
         PCRT_DateTime testTo = new PCRT_DateTime(
                 new PCRTest(to, null, Integer.MAX_VALUE, 0, 0, 0, false, 0.0, "")

@@ -25,6 +25,7 @@ public class Database {
     private AVLTree<Region> regions_;
     private AVLTree<District> districts_;
     private AVLTree<Workplace> workplaces_;
+    private int nextTestID_ = 1;
 
     private Database() {
         this.testsByDate_ = new AVLTree<>();
@@ -63,6 +64,7 @@ public class Database {
         }
 
         //testy
+        test.setPcrID(this.nextTestID_++);
         PCRT_DateTime wrapper = new PCRT_DateTime(test);
         this.testsByDate_.insert(wrapper);
         this.testsByID_.insert(test);
