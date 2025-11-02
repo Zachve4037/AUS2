@@ -1,8 +1,10 @@
 package who.baseClasses;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class PCRTest implements Comparable<PCRTest> {
+public class PCRTest implements Comparable<PCRTest>, Serializable {
+    private static final long serialVersionUID = 1L;
     private LocalDateTime timeOfTest_;
     private String personID_;
     private Person person_;

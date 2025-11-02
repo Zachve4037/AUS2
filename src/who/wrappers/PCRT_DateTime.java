@@ -2,9 +2,11 @@ package who.wrappers;
 
 import who.baseClasses.PCRTest;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class PCRT_DateTime implements Comparable<PCRT_DateTime> {
+public class PCRT_DateTime implements Comparable<PCRT_DateTime>, Serializable {
+    private static final long serialVersionUID = 1L;
     private final PCRTest test;
 
     public PCRT_DateTime(PCRTest test) {

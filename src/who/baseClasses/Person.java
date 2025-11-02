@@ -3,12 +3,14 @@ package who.baseClasses;
 import trees.avl.AVLTree;
 import who.wrappers.PCRT_DateTime;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
 import static who.baseClasses.PCRTest.keyToTest;
 
-public class Person implements Comparable<Person> {
+public class Person implements Comparable<Person>, Serializable {
+    private static final long serialVersionUID = 1L;
     private String name_;
     private String surname_;
     private Date birthDate_;

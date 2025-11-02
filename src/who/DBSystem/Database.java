@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 public class Database {
+    private static volatile Database instance;
+
     private AVLTree<PCRT_DateTime> testsByDate_;
     private AVLTree<PCRTest> testsByID_;
     private AVLTree<PCRT_DateTime> positiveTests_;
@@ -21,7 +23,7 @@ public class Database {
     private AVLTree<District> districts_;
     private AVLTree<Workplace> workplaces_;
 
-    public Database() {
+    private Database() {
         this.testsByDate_ = new AVLTree<>();
         this.positiveTests_ = new AVLTree<>();
         this.testsByID_ = new AVLTree<>();
@@ -29,6 +31,15 @@ public class Database {
         this.regions_ = new AVLTree<>();
         this.districts_ = new AVLTree<>();
         this.workplaces_ = new AVLTree<>();
+    }
+
+    public static Database getInstance() {
+        if (instance == null) {
+            synchronized (Database.class) {
+                if (instance == null) instance = new Database();
+            }
+        }
+        return instance;
     }
 
     //1
@@ -146,36 +157,36 @@ public class Database {
     }
 
     //10, 11
-    public AVLTree<Person> getSickPeopleFromDisctrict(int districtID, LocalDateTime date, int days, boolean sortByTestValue) {
+    public List<Person> getSickPeopleFromDisctrict(int districtID, LocalDateTime date, int days, boolean sortByTestValue) {
         if (districtID <= 0 || days < 0) return null;
         District keyDistrict = new District(districtID);
         District existing = this.districts_.search(keyDistrict);
         if (existing != null) {
             List<PCRT_DateTime> positiveTests = existing.getTestsInInterval(date.minusDays(days), date, true);
-            return getPersonAVLTree(sortByTestValue, positiveTests);
+            return getPersonAVLTree(sortByTestValue, positiveTests).inOrder(false);
         }
         return null;
     }
 
     //12
-    public AVLTree<Person> getSickPeopleFromRegion(int regionID, LocalDateTime date, int days, boolean sortByTestValue) {
+    public List<Person> getSickPeopleFromRegion(int regionID, LocalDateTime date, int days, boolean sortByTestValue) {
         if (regionID <= 0 || days < 0) return null;
         Region keyRegion = new Region(regionID);
         Region existing = this.regions_.search(keyRegion);
         if (existing != null) {
             List<PCRT_DateTime> positiveTests = existing.getTestsInInterval(date.minusDays(days), date, true);
-            return getPersonAVLTree(sortByTestValue, positiveTests);
+            return getPersonAVLTree(sortByTestValue, positiveTests).inOrder(false);
         }
         return null;
     }
 
     //13
-    public AVLTree<Person> getSickPeopleFromAll(LocalDateTime date, int days, boolean sortByTestValue) {
+    public List<Person> getSickPeopleFromAll(LocalDateTime date, int days, boolean sortByTestValue) {
         if (days < 0) return null;
         PCRT_DateTime testFrom = createPCRTKey(date.minusDays(days), Integer.MIN_VALUE);
         PCRT_DateTime testTo = createPCRTKey(date, Integer.MAX_VALUE);
         List<PCRT_DateTime> positiveTests = this.positiveTests_.intervalSearch(testFrom, testTo);
-        return getPersonAVLTree(sortByTestValue, positiveTests);
+        return getPersonAVLTree(sortByTestValue, positiveTests).inOrder(false);
     }
 
     //pomocka na usporiadanie podla testValue a vrati zoznam osob bez duplicit

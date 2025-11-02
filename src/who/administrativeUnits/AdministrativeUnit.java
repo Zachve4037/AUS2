@@ -4,10 +4,12 @@ import trees.avl.AVLTree;
 import who.baseClasses.PCRTest;
 import who.wrappers.PCRT_DateTime;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implements Comparable<T> {
+public abstract class AdministrativeUnit<T extends AdministrativeUnit<T>> implements Comparable<T>, Serializable {
+    private static final long serialVersionUID = 1L;
     private final int adminUnitID_;
     private AVLTree<PCRT_DateTime> tests;
     private AVLTree<PCRT_DateTime> positiveTests;
