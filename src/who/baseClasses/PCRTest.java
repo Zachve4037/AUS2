@@ -1,9 +1,11 @@
 package who.baseClasses;
 
+import who.Exportable;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class PCRTest implements Comparable<PCRTest>, Serializable {
+public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
     private static final long serialVersionUID = 1L;
     private LocalDateTime timeOfTest_;
     private String personID_;
@@ -37,12 +39,60 @@ public class PCRTest implements Comparable<PCRTest>, Serializable {
         this.note_ = note;
     }
 
+    public void printTestInfo() {
+        System.out.println("PCR Test ID: " + this.pcrID_);
+        System.out.println("Person ID: " + this.personID_);
+        System.out.println("Time of Test: " + this.timeOfTest_);
+        System.out.println("Workplace ID: " + this.workplaceID_);
+        System.out.println("Region ID: " + this.regionID_);
+        System.out.println("District ID: " + this.districtID_);
+        System.out.println("Test Result: " + (this.result_ ? "Positive" : "Negative"));
+        System.out.println("Test Value: " + this.testValue_);
+        System.out.println("Note: " + this.note_);
+        this.person_.printPersonInfo();
+    }
+
     public LocalDateTime getTimeOfTest() {
         return timeOfTest_;
     }
 
     public void setTimeOfTest(LocalDateTime timeOfTest_) {
         this.timeOfTest_ = timeOfTest_;
+    }
+
+    @Override
+    public String serialize() {
+        return this.timeOfTest_.toString() + ";" +
+                this.personID_ + ";" +
+                this.pcrID_ + ";" +
+                this.workplaceID_ + ";" +
+                this.regionID_ + ";" +
+                this.districtID_ + ";" +
+                this.result_ + ";" +
+                this.testValue_ + ";" +
+                this.note_;
+    }
+
+    @Override
+    public void deserialize(String data) {
+        String[] parts = data.split(";");
+        if (parts.length == 9) {
+            this.timeOfTest_ = LocalDateTime.parse(parts[0]);
+            this.personID_ = parts[1];
+            this.pcrID_ = Integer.parseInt(parts[2]);
+            this.workplaceID_ = Integer.parseInt(parts[3]);
+            this.regionID_ = Integer.parseInt(parts[4]);
+            this.districtID_ = Integer.parseInt(parts[5]);
+            this.result_ = Boolean.parseBoolean(parts[6]);
+            this.testValue_ = Double.parseDouble(parts[7]);
+            this.note_ = parts[8];
+        }
+    }
+
+    @Override
+    public int compareTo(PCRTest o) {
+        if (o == null) return 1;
+        return Integer.compare(this.pcrID_, o.pcrID_);
     }
 
     public String getPersonID() {
@@ -107,12 +157,6 @@ public class PCRTest implements Comparable<PCRTest>, Serializable {
 
     public void setNote(String note_) {
         this.note_ = note_;
-    }
-
-    @Override
-    public int compareTo(PCRTest o) {
-        if (o == null) return 1;
-        return Integer.compare(this.pcrID_, o.pcrID_);
     }
 
     public Person getPerson() {

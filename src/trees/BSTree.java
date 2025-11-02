@@ -1,8 +1,11 @@
 package trees;
 
+import java.io.*;
 import java.util.*;
+import java.util.function.Supplier;
+import who.Exportable;
 
-public class BSTree<T extends Comparable<T>> {
+public class BSTree<T extends Comparable<T> & Exportable> {
     protected int nodeCount;
     protected BSTNode<T> root;
 
@@ -235,6 +238,32 @@ public class BSTree<T extends Comparable<T>> {
                 current = current.getRightSon();
             }
             return current.getValue();
+        }
+    }
+
+    public void exportToFile(String filePath) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            for (T value : this.inOrder(false)) {
+                writer.write(value.serialize());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void importFromFile(String filePath, Supplier<T> factory) throws IOException {
+        this.root = null;
+        this.nodeCount = 0;
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                T obj = factory.get();
+                obj.deserialize(line);
+                this.insert(obj);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

@@ -1,6 +1,7 @@
 package who.baseClasses;
 
 import trees.avl.AVLTree;
+import who.Exportable;
 import who.wrappers.PCRT_DateTime;
 
 import java.io.Serializable;
@@ -9,7 +10,7 @@ import java.util.List;
 
 import static who.baseClasses.PCRTest.keyToTest;
 
-public class Person implements Comparable<Person>, Serializable {
+public class Person implements Comparable<Person>, Serializable, Exportable {
     private static final long serialVersionUID = 1L;
     private String name_;
     private String surname_;
@@ -27,10 +28,38 @@ public class Person implements Comparable<Person>, Serializable {
         this.pcrTestsById_ = new AVLTree<>();
     }
 
+    public void printPersonInfo() {
+        System.out.println("ID: " + this.ID_);
+        System.out.println("Name: " + this.name_);
+        System.out.println("Surname: " + this.surname_);
+        System.out.println("Birth Date: " + this.birthDate_);
+    }
+
     @Override
     public int compareTo(Person p) {
         if (p == null) return 1;
         return this.ID_.compareTo(p.ID_);
+    }
+
+    @Override
+    public String serialize() {
+        return this.ID_ + ";" + this.name_ + ";" + this.surname_ + ";" + this.birthDate_.getTime();
+    }
+
+    @Override
+    public void deserialize(String data) {
+        String[] parts = data.split(";");
+        if (parts.length == 4) {
+            this.ID_ = parts[0];
+            this.name_ = parts[1];
+            this.surname_ = parts[2];
+            try {
+                long time = Long.parseLong(parts[3]);
+                this.birthDate_ = new Date(time);
+            } catch (NumberFormatException e) {
+                this.birthDate_ = null;
+            }
+        }
     }
 
     public String getName_() {

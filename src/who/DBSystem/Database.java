@@ -9,6 +9,9 @@ import who.baseClasses.PCRTest;
 import who.baseClasses.Person;
 import who.wrappers.PCRT_DateTime;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -52,7 +55,6 @@ public class Database {
             Person keyPerson = new Person(personID, null, null, null);
             Person existingPerson = this.people_.search(keyPerson);
             if (existingPerson == null) {
-                // osoba neexistuje -> neumožníme vložiť test
                 return null;
             } else {
                 existingPerson.addTest(test);
@@ -63,7 +65,7 @@ public class Database {
         //testy
         PCRT_DateTime wrapper = new PCRT_DateTime(test);
         this.testsByDate_.insert(wrapper);
-        this.testsByID_.insert(test); // predpoklad: PCRTest.compareTo porovnáva podľa ID
+        this.testsByID_.insert(test);
         if (test.getTestResult()) {
             this.positiveTests_.insert(wrapper);
         }
@@ -322,5 +324,23 @@ public class Database {
             }
         }
         this.people_.delete(existing);
+    }
+
+    public void exportToFiles(String peoplePath, String testsPath) throws IOException {
+        this.people_.exportToFile(peoplePath);
+        this.testsByID_.exportToFile(testsPath);
+    }
+
+    public void importFromFiles(String peoplePath, String testsPath) throws IOException {
+        this.people_ = new AVLTree<>();
+        this.people_.importFromFile(peoplePath, () -> new Person("", "", "", null));
+
+        List<String> testLines = Files.readAllLines(Paths.get(testsPath));
+        for (String line : testLines) {
+            if (line == null || line.isBlank()) continue;
+            PCRTest t = new PCRTest(null, "", 0, 0, 0, 0, false, 0.0, "");
+            t.deserialize(line);
+            this.insertTest(t);
+        }
     }
 }
