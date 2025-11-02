@@ -28,21 +28,17 @@ public class DatabaseGUI extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // --- Tabs ---
         JTabbedPane tabPane = new JTabbedPane();
         tabPane.add("Osoby", createPersonPanel());
         tabPane.add("Testy", createTestPanel());
 
-        // make query panel scrollable
         JPanel queryPanel = createQueryPanel();
-        // ensure the panel is larger than the viewport so scrollbars appear when needed
         queryPanel.setPreferredSize(new Dimension(900, 900));
         JScrollPane queryScroll = new JScrollPane(queryPanel,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         tabPane.add("Výpisy", queryScroll);
 
-        // --- Výstupná plocha ---
         outputArea = new JTextArea();
         outputArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(outputArea);
@@ -60,17 +56,18 @@ public class DatabaseGUI extends JFrame {
         add(splitPane, BorderLayout.CENTER);
     }
 
-    // ------------------- OSOBY -------------------
+    // OSOBY
     private JPanel createPersonPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 1));
         JPanel addPanel = new JPanel(new FlowLayout());
         JPanel deletePanel = new JPanel(new FlowLayout());
         JPanel ioPanel = new JPanel(new FlowLayout());
 
+        //19
         JTextField personID = new JTextField(10);
         JTextField name = new JTextField(10);
         JTextField surname = new JTextField(10);
-        JTextField birthDate = new JTextField(10); // yyyy-MM-dd or millis
+        JTextField birthDate = new JTextField(10);
         JButton addBtn = new JButton("Pridať osobu");
 
         addPanel.add(new JLabel("Rodné číslo:"));
@@ -79,7 +76,7 @@ public class DatabaseGUI extends JFrame {
         addPanel.add(name);
         addPanel.add(new JLabel("Priezvisko:"));
         addPanel.add(surname);
-        addPanel.add(new JLabel("Birthdate (yyyy-MM-dd or millis):"));
+        addPanel.add(new JLabel("Birthdate (yyyy-MM-dd):"));
         addPanel.add(birthDate);
         addPanel.add(addBtn);
 
@@ -114,6 +111,7 @@ public class DatabaseGUI extends JFrame {
             }
         });
 
+        //21
         JTextField deleteID = new JTextField(10);
         JButton deleteBtn = new JButton("Vymazať osobu");
         deletePanel.add(new JLabel("Rodné číslo:"));
@@ -130,8 +128,6 @@ public class DatabaseGUI extends JFrame {
             output("Requested deletion of person: " + id);
         });
 
-        // Single-file Import / Export buttons for both persons and tests,
-        // but prompt separately for people path then tests path (same logic as previous query-tab buttons)
         JButton exportAllBtn = new JButton("Export All (people+tests)");
         JButton importAllBtn = new JButton("Import All (people+tests)");
         ioPanel.add(exportAllBtn);
@@ -176,11 +172,11 @@ public class DatabaseGUI extends JFrame {
     }
 
 
-    // ------------------- TESTY -------------------
+    // TESTY
     private JPanel createTestPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 1));
 
-        // Add test
+        //1
         JPanel addPanel = new JPanel(new FlowLayout());
         JTextField personID = new JTextField(10);
         JTextField timeField = new JTextField(16);
@@ -252,7 +248,7 @@ public class DatabaseGUI extends JFrame {
             }
         });
 
-        // Delete test
+        //20
         JPanel deletePanel = new JPanel(new FlowLayout());
         JTextField testIDField = new JTextField(8);
         JButton deleteBtn = new JButton("Vymazať test");
@@ -270,7 +266,6 @@ public class DatabaseGUI extends JFrame {
             output("Requested deletion of test: " + id);
         });
 
-        // Quick actions: clear output
         JPanel miscPanel = new JPanel(new FlowLayout());
         JButton clearBtn = new JButton("Clear Output");
         miscPanel.add(clearBtn);
@@ -282,19 +277,18 @@ public class DatabaseGUI extends JFrame {
         return panel;
     }
 
-    // ------------------- VÝPISY -------------------
+    // VÝPISY
     private JPanel createQueryPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        // --- Helper function ---
         Function<String, JPanel> createSection = (title) -> {
             JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
             p.setBorder(BorderFactory.createTitledBorder(title));
             return p;
         };
 
-        // 1) Tests for person
+        //3
         JPanel byPerson = createSection.apply("Get tests for person");
         JTextField personQueryField = new JTextField(10);
         JButton showPersonTests = new JButton("Show");
@@ -310,7 +304,7 @@ public class DatabaseGUI extends JFrame {
             tests.forEach(w -> output(formatTest(w.getTest())));
         });
 
-        // 2) Test by ID
+        //18
         JPanel byTest = createSection.apply("Get test by ID");
         JTextField testQueryField = new JTextField(8);
         JButton showTest = new JButton("Show");
@@ -324,7 +318,7 @@ public class DatabaseGUI extends JFrame {
             output(t == null ? "Test not found: " + id : formatTest(t));
         });
 
-        // 3) Test by Person + ID
+        //2
         JPanel byPersonTest = createSection.apply("Get test by person + ID");
         JTextField personIdForTest = new JTextField(10);
         JTextField testIdForPerson = new JTextField(6);
@@ -342,7 +336,7 @@ public class DatabaseGUI extends JFrame {
             output(t == null ? "Not found" : formatTest(t));
         });
 
-        // 4) Tests in interval (District)
+        //4, 5
         JPanel intervalDistrict = createSection.apply("Tests in interval (District)");
         JTextField districtId = new JTextField(5);
         JTextField fromD = new JTextField(12);
@@ -366,7 +360,7 @@ public class DatabaseGUI extends JFrame {
                     "District " + did + " tests:");
         });
 
-        // 5) Tests in interval (Region)
+        //6, 7
         JPanel intervalRegion = createSection.apply("Tests in interval (Region)");
         JTextField regionId = new JTextField(5);
         JTextField fromR = new JTextField(12);
@@ -375,9 +369,9 @@ public class DatabaseGUI extends JFrame {
         JButton queryRegion = new JButton("Run");
         intervalRegion.add(new JLabel("Region ID:"));
         intervalRegion.add(regionId);
-        intervalRegion.add(new JLabel("From:"));
+        intervalRegion.add(new JLabel("From (ISO):"));
         intervalRegion.add(fromR);
-        intervalRegion.add(new JLabel("To:"));
+        intervalRegion.add(new JLabel("To (ISO):"));
         intervalRegion.add(toR);
         intervalRegion.add(posR);
         intervalRegion.add(queryRegion);
@@ -390,7 +384,50 @@ public class DatabaseGUI extends JFrame {
                     "Region " + rid + " tests:");
         });
 
-        // 6) Sick people (District)
+        //17
+        JPanel intervalWorkplace = createSection.apply("Tests in interval (Workplace)");
+        JTextField workplaceId = new JTextField(5);
+        JTextField fromW = new JTextField(12);
+        JTextField toW = new JTextField(12);
+        JCheckBox posW = new JCheckBox("Only positive");
+        JButton queryWorkplace = new JButton("Run");
+        intervalWorkplace.add(new JLabel("Workplace ID:"));
+        intervalWorkplace.add(workplaceId);
+        intervalWorkplace.add(new JLabel("From (ISO):"));
+        intervalWorkplace.add(fromW);
+        intervalWorkplace.add(new JLabel("To (ISO):"));
+        intervalWorkplace.add(toW);
+        intervalWorkplace.add(posW);
+        intervalWorkplace.add(queryWorkplace);
+        queryWorkplace.addActionListener(e -> {
+            int rid = parseIntSafe(workplaceId.getText(), -1);
+            LocalDateTime f = parseDateTimeOrNull(fromW.getText());
+            LocalDateTime t = parseDateTimeOrNull(toW.getText());
+            if (rid < 0 || f == null || t == null) { output("Invalid input"); return; }
+            printTestList(this.db_.getTestsInIntervalForWorkplace(rid, f, t, posW.isSelected()),
+                    "Workplace " + rid + " tests:");
+        });
+
+        //8, 9
+        JPanel intervalAll = createSection.apply("Tests in interval ALL");
+        JTextField fromA = new JTextField(12);
+        JTextField toA = new JTextField(12);
+        JCheckBox posA = new JCheckBox("Only positive");
+        JButton queryAll = new JButton("Run");
+        intervalAll.add(new JLabel("From:"));
+        intervalAll.add(fromA);
+        intervalAll.add(new JLabel("To:"));
+        intervalAll.add(toA);
+        intervalAll.add(posA);
+        intervalAll.add(queryAll);
+        queryAll.addActionListener(e -> {
+            LocalDateTime f = parseDateTimeOrNull(fromA.getText());
+            LocalDateTime t = parseDateTimeOrNull(toA.getText());
+            printTestList(this.db_.getTestsInInterval(f, t, posA.isSelected()),
+                    "All tests:");
+        });
+
+        //10, 11
         JPanel sickDistrict = createSection.apply("Sick people (District)");
         JTextField sdDistrict = new JTextField(5);
         JTextField sdDate = new JTextField(12);
@@ -415,7 +452,52 @@ public class DatabaseGUI extends JFrame {
             else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
         });
 
-        // 7) Districts sorted by sick people
+        //12
+        JPanel sickRegion = createSection.apply("Sick people (Region)");
+        JTextField srRegion = new JTextField(5);
+        JTextField srDate = new JTextField(12);
+        JTextField srDays = new JTextField(4);
+        JCheckBox srSort = new JCheckBox("Sort by test value");
+        JButton srBtn = new JButton("Show");
+        sickRegion.add(new JLabel("Region ID:"));
+        sickRegion.add(srRegion);
+        sickRegion.add(new JLabel("Date:"));
+        sickRegion.add(srDate);
+        sickRegion.add(new JLabel("Days:"));
+        sickRegion.add(srDays);
+        sickRegion.add(srSort);
+        sickRegion.add(srBtn);
+        srBtn.addActionListener(e -> {
+            int rid = parseIntSafe(sdDistrict.getText(), -1);
+            LocalDateTime date = parseDateTimeOrNull(sdDate.getText());
+            int days = parseIntSafe(sdDays.getText(), 0);
+            if (rid < 0 || date == null) { output("Invalid input"); return; }
+            List<Person> res = this.db_.getSickPeopleFromRegion(rid, date, days, sdSort.isSelected());
+            if (res == null || res.isEmpty()) output("No sick people");
+            else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+        });
+
+        //13
+        JPanel sickAll = createSection.apply("Sick people (ALL)");
+        JTextField saDate = new JTextField(12);
+        JTextField saDays = new JTextField(4);
+        JCheckBox saSort = new JCheckBox("Sort by test value");
+        JButton saBtn = new JButton("Show");
+        sickAll.add(new JLabel("Date:"));
+        sickAll.add(saDate);
+        sickAll.add(new JLabel("Days:"));
+        sickAll.add(saDays);
+        sickAll.add(saSort);
+        sickAll.add(saBtn);
+        saBtn.addActionListener(e -> {
+            LocalDateTime date = parseDateTimeOrNull(saDate.getText());
+            int days = parseIntSafe(saDays.getText(), 0);
+            List<Person> res = this.db_.getSickPeopleFromAll(date, days, saSort.isSelected());
+            if (res == null || res.isEmpty()) output("No sick people");
+            else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+        });
+
+        //15
         JPanel districtsSorted = createSection.apply("Districts sorted by sick people");
         JTextField dsDate = new JTextField(12);
         JTextField dsDays = new JTextField(4);
@@ -434,7 +516,7 @@ public class DatabaseGUI extends JFrame {
             else res.forEach(o -> output(o.toString()));
         });
 
-        // 8) Regions sorted by sick people
+        //16
         JPanel regionsSorted = createSection.apply("Regions sorted by sick people");
         JTextField rsDate = new JTextField(12);
         JTextField rsDays = new JTextField(4);
@@ -453,20 +535,53 @@ public class DatabaseGUI extends JFrame {
             else res.forEach(o -> output(o.toString()));
         });
 
-        // add all sections
+        //14
+        JPanel highestValueSection = createSection.apply("Person(s) by highest test value");
+        JTextField hvDate = new JTextField(12);
+        JTextField hvDays = new JTextField(4);
+        JButton hvBtn = new JButton("Show");
+        highestValueSection.add(new JLabel("Date:"));
+        highestValueSection.add(hvDate);
+        highestValueSection.add(new JLabel("Days:"));
+        highestValueSection.add(hvDays);
+        highestValueSection.add(hvBtn);
+        hvBtn.addActionListener(e -> {
+            LocalDateTime d = parseDateTimeOrNull(hvDate.getText());
+            int days = parseIntSafe(hvDays.getText(), 0);
+            if (d == null) { output("Invalid date"); return; }
+            List<Person> res = this.db_.getPersonByHighestTestValue(d, days);
+            if (res == null || res.isEmpty()) {
+                output("No results");
+                return;
+            }
+            output("Person(s) with highest test value:");
+            for (Person p : res) {
+                if (p == null) {
+                    output("null person");
+                    continue;
+                }
+                output(p.getName() + " " + p.getSurname() + " ID: " + p.getID());
+            }
+        });
+
         panel.add(byPerson);
         panel.add(byTest);
         panel.add(byPersonTest);
         panel.add(intervalDistrict);
         panel.add(intervalRegion);
+        panel.add(intervalWorkplace);
+        panel.add(intervalAll);
         panel.add(sickDistrict);
+        panel.add(sickRegion);
+        panel.add(sickAll);
         panel.add(districtsSorted);
         panel.add(regionsSorted);
+        panel.add(highestValueSection);
 
         return panel;
     }
 
-    // ------------------- Helpers -------------------
+    // POMOCNE
     private void printTestList(List<PCRT_DateTime> res, String header) {
         if (res == null || res.isEmpty()) {
             output("No tests found");
@@ -493,16 +608,6 @@ public class DatabaseGUI extends JFrame {
         if (s == null || s.isEmpty()) return def;
         try {
             return Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            output("Invalid number: " + s);
-            return def;
-        }
-    }
-
-    private double parseDoubleSafe(String s, double def) {
-        if (s == null || s.isEmpty()) return def;
-        try {
-            return Double.parseDouble(s);
         } catch (NumberFormatException e) {
             output("Invalid number: " + s);
             return def;

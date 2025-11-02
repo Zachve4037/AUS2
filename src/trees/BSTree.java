@@ -242,7 +242,17 @@ public class BSTree<T extends Comparable<T>> {
     }
 
     public void exportToFile(String filePath) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+        if (!filePath.toLowerCase().endsWith(".csv")) {
+            filePath = filePath + ".csv";
+        }
+
+        File outFile = new File(filePath);
+        File parent = outFile.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
             for (T value : this.inOrder(false)) {
                 if (value == null) continue;
                 if (value instanceof Exportable) {
