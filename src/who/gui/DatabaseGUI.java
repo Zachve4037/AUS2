@@ -1,4 +1,3 @@
-// java
 package who.gui;
 
 import who.DBSystem.DBServicesANDInterface.DatabaseServiceLayer;
@@ -669,7 +668,6 @@ public class DatabaseGUI extends JFrame {
         return null;
     }
 
-    // Row counting helpers
     private int countValid(List<?> list) {
         if (list == null) return 0;
         int c = 0;
