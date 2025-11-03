@@ -1,6 +1,6 @@
 package who.wrappers;
 
-import who.Exportable;
+import who.DBSystem.DBServicesANDInterface.Exportable;
 import who.baseClasses.PCRTest;
 
 import java.io.Serializable;

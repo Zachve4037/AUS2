@@ -368,7 +368,7 @@ public class Tester {
                         }
                     }
                 }
-                if (i % 1000000 == 0) {
+                if (i % 10_000 == 0) {
                     if (!haveSameElements(pom, avl.inOrder(false))) {
                         throw new AssertionError("error at " + j);
                     }

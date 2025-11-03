@@ -30,6 +30,9 @@
 
 ----------------------------------------------------------------------------------
 
+GUI
+- pocet vypisanych zaznamov
+
 DB
 - serializacia a deserializacia, cleanup
 - zamenit rod cislo za unikatne cislo pacienta
@@ -42,8 +45,7 @@ GENERATOR ZAZNAMOV DB
 DOC
 - nemusi byt dlha
 - vycislene zlozitosti
-- popis mojho bvs a avl, rozkreslit jednotlive situacie ako su riesene v kode
 - UML diagram tried
-- strucny popis AVL, popis metod
-- nakreslit si DB, na zaklade toho spocitat zlozitosti operacii
+- AVL rotácie nakreslit a popisat
+- nakreslit si DB, na zaklade toho spocitat zlozitosti operacii plus popis operacii
 - popis architektury velmi strucne (pochvalit sa ak je nieco KURRRRRRRWA dobre)

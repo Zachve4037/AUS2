@@ -1,7 +1,6 @@
 package trees.avl;
 
 import trees.BSTree;
-import who.Exportable;
 
 public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
 
@@ -99,12 +98,18 @@ public class AVLTree<T extends Comparable<T>> extends BSTree<T> {
                 } else {
                     rotateLeftRight((AVLNode<T>) node.getLeftSon().getRightSon());
                 }
+                if (isInsert) {
+                    return;
+                }
             }
             if (balFac < -1) {
                 if (height((AVLNode<T>) node.getRightSon().getRightSon()) >= height((AVLNode<T>) node.getRightSon().getLeftSon())) {
                     rotateLeft((AVLNode<T>) node.getRightSon());
                 } else {
                     rotateRightLeft((AVLNode<T>) node.getRightSon().getLeftSon());
+                }
+                if (isInsert) {
+                    return;
                 }
             }
             node = (AVLNode<T>) node.getParent();

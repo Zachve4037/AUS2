@@ -1,6 +1,6 @@
 package who.baseClasses;
 
-import who.Exportable;
+import who.DBSystem.DBServicesANDInterface.Exportable;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
