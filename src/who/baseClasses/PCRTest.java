@@ -85,45 +85,14 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
     public void deserialize(String data) {
         String[] parts = data.split(";", -1);
         if (parts.length >= 9) {
-            try {
-                this.timeOfTest_ = parts[0].isEmpty() ? null : LocalDateTime.parse(parts[0]);
-            } catch (Exception e) {
-                this.timeOfTest_ = null;
-            }
-
+            this.timeOfTest_ = parts[0].isEmpty() ? null : LocalDateTime.parse(parts[0]);
             this.personID_ = parts[1];
-
-            try {
-                this.pcrID_ = Integer.parseInt(parts[2]);
-            } catch (NumberFormatException e) {
-                this.pcrID_ = 0;
-            }
-
-            try {
-                this.workplaceID_ = Integer.parseInt(parts[3]);
-            } catch (NumberFormatException e) {
-                this.workplaceID_ = 0;
-            }
-
-            try {
-                this.regionID_ = Integer.parseInt(parts[4]);
-            } catch (NumberFormatException e) {
-                this.regionID_ = 0;
-            }
-
-            try {
-                this.districtID_ = Integer.parseInt(parts[5]);
-            } catch (NumberFormatException e) {
-                this.districtID_ = 0;
-            }
-
+            this.pcrID_ = Integer.parseInt(parts[2]);
+            this.workplaceID_ = Integer.parseInt(parts[3]);
+            this.regionID_ = Integer.parseInt(parts[4]);
+            this.districtID_ = Integer.parseInt(parts[5]);
             this.result_ = Boolean.parseBoolean(parts[6]);
-
-            try {
-                this.testValue_ = Double.parseDouble(parts[7]);
-            } catch (NumberFormatException e) {
-                this.testValue_ = 0.0;
-            }
+            this.testValue_ = Double.parseDouble(parts[7]);
 
             if (parts.length == 9) {
                 this.note_ = parts[8];
