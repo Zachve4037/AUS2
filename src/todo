@@ -32,6 +32,7 @@
 
 DB
 - serializacia a deserializacia, cleanup
+- zamenit rod cislo za unikatne cislo pacienta
 
 GENERATOR ZAZNAMOV DB
 - generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
