@@ -27,15 +27,12 @@
 - nacitanie DB zo suborov (bacha na referencie aby som nevytvaral zbytocne vela objektov)
 - aby to komunikovalo s DatabaseServiceLayer
 - GUI
+- pocet vypisanych zaznamov
 
 ----------------------------------------------------------------------------------
 
-GUI
-- pocet vypisanych zaznamov
-
 DB
 - serializacia a deserializacia, cleanup
-- zamenit rod cislo za unikatne cislo pacienta
 
 GENERATOR ZAZNAMOV DB
 - generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
@@ -49,3 +46,5 @@ DOC
 - AVL rotácie nakreslit a popisat
 - nakreslit si DB, na zaklade toho spocitat zlozitosti operacii plus popis operacii
 - popis architektury velmi strucne (pochvalit sa ak je nieco KURRRRRRRWA dobre)
+
+- JAR

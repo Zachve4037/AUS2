@@ -29,6 +29,10 @@ public class DatabaseServiceLayer implements IDatabaseService {
         return instance;
     }
 
+    public void generateTestData() {
+        this.db_.generateTestData();
+    }
+
     @Override
     public void importFromFile(String peoplePath, String testsPath) throws IOException {
         this.db_.importFromFiles(peoplePath, testsPath);

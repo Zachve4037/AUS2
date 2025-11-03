@@ -165,6 +165,17 @@ public class DatabaseGUI extends JFrame {
             }
         });
 
+        JButton genDataBtn = new JButton("Generate Data");
+        ioPanel.add(genDataBtn);
+        genDataBtn.addActionListener(e -> {
+            try {
+                this.db_.generateTestData();
+                output("Generated people and tests");
+            } catch (Exception ex) {
+                output("Generate failed: " + ex.getMessage());
+            }
+        });
+
         panel.add(addPanel);
         panel.add(deletePanel);
         panel.add(ioPanel);
@@ -299,9 +310,10 @@ public class DatabaseGUI extends JFrame {
             String id = personQueryField.getText().trim();
             if (id.isEmpty()) { output("Person ID required"); return; }
             List<PCRT_DateTime> tests = this.db_.getPersonTestsForPerson(id);
-            if (tests == null || tests.isEmpty()) { output("No tests found for " + id); return; }
+            if (tests == null || tests.isEmpty()) { output("No tests found for " + id); outputCount(tests); return; }
             output("Tests for person " + id + ":");
             tests.forEach(w -> output(formatTest(w.getTest())));
+            outputCount(tests);
         });
 
         //18
@@ -316,6 +328,7 @@ public class DatabaseGUI extends JFrame {
             if (id <= 0) { output("Invalid test ID"); return; }
             PCRTest t = this.db_.getPCRTestByID(id);
             output(t == null ? "Test not found: " + id : formatTest(t));
+            outputCount(t);
         });
 
         //2
@@ -334,6 +347,7 @@ public class DatabaseGUI extends JFrame {
             if (pid.isEmpty() || tid <= 0) { output("Invalid input"); return; }
             PCRTest t = this.db_.getTestByPersonByID(pid, tid);
             output(t == null ? "Not found" : formatTest(t));
+            outputCount(t);
         });
 
         //4, 5
@@ -450,6 +464,7 @@ public class DatabaseGUI extends JFrame {
             List<Person> res = this.db_.getSickPeopleFromDisctrict(did, date, days, sdSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
             else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            outputCount(res);
         });
 
         //12
@@ -475,6 +490,7 @@ public class DatabaseGUI extends JFrame {
             List<Person> res = this.db_.getSickPeopleFromRegion(rid, date, days, sdSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
             else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            outputCount(res);
         });
 
         //13
@@ -495,6 +511,7 @@ public class DatabaseGUI extends JFrame {
             List<Person> res = this.db_.getSickPeopleFromAll(date, days, saSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
             else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            outputCount(res);
         });
 
         //15
@@ -514,6 +531,7 @@ public class DatabaseGUI extends JFrame {
             output("Districts sorted by sick people:");
             if (res == null || res.isEmpty()) output("No results");
             else res.forEach(o -> output(o.toString()));
+            outputCount(res);
         });
 
         //16
@@ -533,6 +551,7 @@ public class DatabaseGUI extends JFrame {
             output("Regions sorted by sick people:");
             if (res == null || res.isEmpty()) output("No results");
             else res.forEach(o -> output(o.toString()));
+            outputCount(res);
         });
 
         //14
@@ -552,6 +571,7 @@ public class DatabaseGUI extends JFrame {
             List<Person> res = this.db_.getPersonByHighestTestValue(d, days);
             if (res == null || res.isEmpty()) {
                 output("No results");
+                outputCount(res);
                 return;
             }
             output("Person(s) with highest test value:");
@@ -562,6 +582,7 @@ public class DatabaseGUI extends JFrame {
                 }
                 output(p.getName() + " " + p.getSurname() + " ID: " + p.getID());
             }
+            outputCount(res);
         });
 
         panel.add(byPerson);
@@ -585,10 +606,12 @@ public class DatabaseGUI extends JFrame {
     private void printTestList(List<PCRT_DateTime> res, String header) {
         if (res == null || res.isEmpty()) {
             output("No tests found");
+            outputCount(res);
             return;
         }
         output(header);
         for (PCRT_DateTime w : res) output(formatTest(w.getTest()));
+        outputCount(res);
     }
 
     private LocalDateTime parseDateTimeOrNull(String s) {
@@ -626,5 +649,21 @@ public class DatabaseGUI extends JFrame {
             return chooser.getSelectedFile();
         }
         return null;
+    }
+
+    // Row counting helpers
+    private int countValid(List<?> list) {
+        if (list == null) return 0;
+        int c = 0;
+        for (Object o : list) if (o != null) c++;
+        return c;
+    }
+
+    private void outputCount(List<?> list) {
+        output("Rows: " + countValid(list));
+    }
+
+    private void outputCount(Object o) {
+        output("Rows: " + (o == null ? 0 : 1));
     }
 }

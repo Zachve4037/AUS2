@@ -46,6 +46,42 @@ public class Database {
         return instance;
     }
 
+    public void generateTestData() {
+        Random rand = new Random(0);
+
+        for (int i = 1; i <= 10; i++) {
+            this.regions_.insert(new Region(i));
+        }
+        for (int i = 1; i <= 50; i++) {
+            this.districts_.insert(new District(i));
+        }
+        for (int i = 1; i <= 250; i++) {
+            this.workplaces_.insert(new Workplace(i));
+        }
+
+        List<String> personIds = new ArrayList<>(1000);
+        for (int i = 1; i <= 1000; i++) {
+            String pid = "P" + i;
+            Person p = new Person(pid, pid, pid, null);
+            this.insertPerson(p);
+            personIds.add(pid);
+        }
+
+        for (int i = 0; i < 5000; i++) {
+            String pid = personIds.get(rand.nextInt(personIds.size()));
+            int regionId = rand.nextInt(10) + 1;
+            int districtId = rand.nextInt(50) + 1;
+            int workplaceId = rand.nextInt(250) + 1;
+
+            LocalDateTime time = LocalDateTime.now().minusDays(rand.nextInt(365));
+            boolean result = rand.nextBoolean();
+            double value = rand.nextDouble() * 100.0;
+
+            PCRTest test = new PCRTest(time, pid, 0, workplaceId, regionId, districtId, result, value, "generated");
+            this.insertTest(test);
+        }
+    }
+
     //1
     public PCRTest insertTest(PCRTest test) {
         if (test == null) return null;
