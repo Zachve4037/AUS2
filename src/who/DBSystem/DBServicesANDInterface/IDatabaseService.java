@@ -33,5 +33,5 @@ public interface IDatabaseService {
 
     List<District> getDistrictsSortedBySickPeople(LocalDateTime date, int days); //15
     List<Region> getRegionsSortedBySickPeople(LocalDateTime date, int days); //16
-    List<Person> getPersonByHighestTestValue(LocalDateTime date, int days); //14
+    List<String> getPersonByHighestTestValue(LocalDateTime date, int days); //14
 }

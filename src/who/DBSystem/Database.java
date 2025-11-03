@@ -12,6 +12,7 @@ import who.wrappers.PCRT_DateTime;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -60,9 +61,10 @@ public class Database {
         }
 
         List<String> personIds = new ArrayList<>(1000);
+        Date birthDate = new Date();
         for (int i = 1; i <= 1000; i++) {
             String pid = "P" + i;
-            Person p = new Person(pid, pid, pid, null);
+            Person p = new Person(pid, pid, pid, birthDate);
             this.insertPerson(p);
             personIds.add(pid);
         }
@@ -245,9 +247,9 @@ public class Database {
     }
 
     //14
-    public List<Person> getPersonByHighestTestValue(LocalDateTime date, int days) {
-        if (date == null || days < 0 || this.districts_ == null) return null;
-        List<Person> highestPople = new LinkedList<>();
+    public List<String> getPersonByHighestTestValue(LocalDateTime date, int days) {
+        if (date == null || days < 0 || this.districts_ == null) return Collections.emptyList();
+        List<String> highestPerDistrict = new LinkedList<>();
         for (District dis : this.districts_.inOrder(false)) {
             List<PCRT_DateTime> filtered = dis.getTestsInInterval(date.minusDays(days), date, true);
             Person res = null;
@@ -256,15 +258,17 @@ public class Database {
                 for (PCRT_DateTime wrapper : filtered) {
                     if (wrapper == null) continue;
                     PCRTest test = wrapper.getTest();
+                    if (test == null) continue;
                     if (test.getTestValue() > highest) {
                         highest = test.getTestValue();
                         res = test.getPerson();
                     }
                 }
             }
-            highestPople.add(res);
+            String pid = (res == null || res.getID() == null) ? "null" : res.getID();
+            highestPerDistrict.add("DistrictID: " + dis.getID() + " - Person Id: " + pid);
         }
-        return highestPople;
+        return highestPerDistrict;
     }
 
     //pomocka na usporiadanie jednotiek podla poctu nakazenych

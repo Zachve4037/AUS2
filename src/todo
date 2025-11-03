@@ -29,15 +29,15 @@
 - GUI
 - pocet vypisanych zaznamov
 
-----------------------------------------------------------------------------------
-
-DB
-- serializacia a deserializacia, cleanup
-
 GENERATOR ZAZNAMOV DB
 - generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
 - na gui nejake tlacidlo na naplnenie DB, moznost zadat pocty (okresy, pouzivatelia)
 - nahodne vstupy
+
+----------------------------------------------------------------------------------
+
+DB
+- serializacia a deserializacia, cleanup
 
 DOC
 - nemusi byt dlha

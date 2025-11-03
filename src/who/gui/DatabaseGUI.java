@@ -1,9 +1,12 @@
+// java
 package who.gui;
 
 import who.DBSystem.DBServicesANDInterface.DatabaseServiceLayer;
 import who.wrappers.PCRT_DateTime;
 import who.baseClasses.Person;
 import who.baseClasses.PCRTest;
+import who.administrativeUnits.District;
+import who.administrativeUnits.Region;
 
 import javax.swing.*;
 import java.awt.*;
@@ -463,7 +466,7 @@ public class DatabaseGUI extends JFrame {
             if (did < 0 || date == null) { output("Invalid input"); return; }
             List<Person> res = this.db_.getSickPeopleFromDisctrict(did, date, days, sdSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
-            else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            else res.forEach(p -> output(p == null ? "null" : p.getID()));
             outputCount(res);
         });
 
@@ -483,13 +486,13 @@ public class DatabaseGUI extends JFrame {
         sickRegion.add(srSort);
         sickRegion.add(srBtn);
         srBtn.addActionListener(e -> {
-            int rid = parseIntSafe(sdDistrict.getText(), -1);
-            LocalDateTime date = parseDateTimeOrNull(sdDate.getText());
-            int days = parseIntSafe(sdDays.getText(), 0);
+            int rid = parseIntSafe(srRegion.getText(), -1);
+            LocalDateTime date = parseDateTimeOrNull(srDate.getText());
+            int days = parseIntSafe(srDays.getText(), 0);
             if (rid < 0 || date == null) { output("Invalid input"); return; }
-            List<Person> res = this.db_.getSickPeopleFromRegion(rid, date, days, sdSort.isSelected());
+            List<Person> res = this.db_.getSickPeopleFromRegion(rid, date, days, srSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
-            else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            else res.forEach(p -> output(p == null ? "null" : p.getID()));
             outputCount(res);
         });
 
@@ -510,7 +513,7 @@ public class DatabaseGUI extends JFrame {
             int days = parseIntSafe(saDays.getText(), 0);
             List<Person> res = this.db_.getSickPeopleFromAll(date, days, saSort.isSelected());
             if (res == null || res.isEmpty()) output("No sick people");
-            else res.forEach(p -> output(p.getName() + " " + p.getSurname()));
+            else res.forEach(p -> output(p == null ? "null" : p.getID()));
             outputCount(res);
         });
 
@@ -527,10 +530,20 @@ public class DatabaseGUI extends JFrame {
         dsBtn.addActionListener(e -> {
             LocalDateTime d = parseDateTimeOrNull(dsDate.getText());
             int days = parseIntSafe(dsDays.getText(), 0);
-            List<?> res = this.db_.getDistrictsSortedBySickPeople(d, days);
+            if (d == null) { output("Invalid date"); return; }
+            List<District> res = (List<District>) this.db_.getDistrictsSortedBySickPeople(d, days);
             output("Districts sorted by sick people:");
-            if (res == null || res.isEmpty()) output("No results");
-            else res.forEach(o -> output(o.toString()));
+            if (res == null || res.isEmpty()) {
+                output("No results");
+                outputCount(res);
+                return;
+            }
+            for (District dis : res) {
+                if (dis == null) continue;
+                List<Person> ppl = this.db_.getSickPeopleFromDisctrict(dis.getID(), d, days, false);
+                int cnt = countValid(ppl);
+                output("DistrictID: " + dis.getID() + " - SickCount: " + cnt);
+            }
             outputCount(res);
         });
 
@@ -547,15 +560,25 @@ public class DatabaseGUI extends JFrame {
         rsBtn.addActionListener(e -> {
             LocalDateTime d = parseDateTimeOrNull(rsDate.getText());
             int days = parseIntSafe(rsDays.getText(), 0);
-            List<?> res = this.db_.getRegionsSortedBySickPeople(d, days);
+            if (d == null) { output("Invalid date"); return; }
+            List<Region> res = (List<Region>) this.db_.getRegionsSortedBySickPeople(d, days);
             output("Regions sorted by sick people:");
-            if (res == null || res.isEmpty()) output("No results");
-            else res.forEach(o -> output(o.toString()));
+            if (res == null || res.isEmpty()) {
+                output("No results");
+                outputCount(res);
+                return;
+            }
+            for (Region r : res) {
+                if (r == null) continue;
+                List<Person> ppl = this.db_.getSickPeopleFromRegion(r.getID(), d, days, false);
+                int cnt = countValid(ppl);
+                output("RegionID: " + r.getID() + " - SickCount: " + cnt);
+            }
             outputCount(res);
         });
 
         //14
-        JPanel highestValueSection = createSection.apply("Person(s) by highest test value");
+        JPanel highestValueSection = createSection.apply("People by highest test value");
         JTextField hvDate = new JTextField(12);
         JTextField hvDays = new JTextField(4);
         JButton hvBtn = new JButton("Show");
@@ -568,20 +591,15 @@ public class DatabaseGUI extends JFrame {
             LocalDateTime d = parseDateTimeOrNull(hvDate.getText());
             int days = parseIntSafe(hvDays.getText(), 0);
             if (d == null) { output("Invalid date"); return; }
-            List<Person> res = this.db_.getPersonByHighestTestValue(d, days);
+            List<String> res = this.db_.getPersonByHighestTestValue(d, days);
             if (res == null || res.isEmpty()) {
                 output("No results");
                 outputCount(res);
                 return;
             }
+
             output("Person(s) with highest test value:");
-            for (Person p : res) {
-                if (p == null) {
-                    output("null person");
-                    continue;
-                }
-                output(p.getName() + " " + p.getSurname() + " ID: " + p.getID());
-            }
+            res.forEach(line -> output(line));
             outputCount(res);
         });
 

@@ -138,8 +138,8 @@ public class DatabaseServiceLayer implements IDatabaseService {
     }
 
     @Override
-    public List<Person> getPersonByHighestTestValue(LocalDateTime date, int days) {
-        List<Person> res = this.db_.getPersonByHighestTestValue(date, days);
-        return res != null ? CopyClass.deepCopyList(res) : Collections.emptyList();
+    public List<String> getPersonByHighestTestValue(LocalDateTime date, int days) {
+        List<String> res = this.db_.getPersonByHighestTestValue(date, days);
+        return res != null ? new java.util.ArrayList<>(res) : Collections.emptyList();
     }
 }
