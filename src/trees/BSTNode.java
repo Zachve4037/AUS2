@@ -13,10 +13,6 @@ public class BSTNode<T extends Comparable<T>> {
         this.parent = null;
     }
 
-    public int compare(T other) {
-        return this.value.compareTo(other);
-    }
-
     public void setValue(T value) {
         this.value = value;
     }

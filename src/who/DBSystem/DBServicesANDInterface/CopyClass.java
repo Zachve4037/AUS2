@@ -6,13 +6,13 @@ import who.wrappers.PCRT_DateTime;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 public class CopyClass {
     private CopyClass() {}
 
-    @SuppressWarnings("unchecked")
     public static <T> T deepCopy(T obj) {
         if (obj == null) return null;
 
@@ -24,22 +24,19 @@ public class CopyClass {
                  ObjectInputStream ois = new ObjectInputStream(bais)) {
                 return (T) ois.readObject();
             }
-        } catch (NotSerializableException nse) {
         } catch (Exception ignored) {
         }
-        if (obj instanceof Person) {
-            return (T) copyPerson((Person) obj);
-        } else if (obj instanceof PCRTest) {
-            return (T) copyPCRTest((PCRTest) obj);
-        } else if (obj instanceof List) {
-            return (T) deepCopyList((List<?>) obj);
-        }
+        return switch (obj) {
+            case Person person -> (T) copyPerson(person);
+            case PCRTest pcrTest -> (T) copyPCRTest(pcrTest);
+            case List list -> (T) deepCopyList(list);
+            default -> obj;
+        };
 
-        return obj;
     }
 
     public static <T> List<T> deepCopyList(List<T> list) {
-        if (list == null) return null;
+        if (list == null) return Collections.emptyList();
         List<T> out = new ArrayList<>(list.size());
         for (T item : list) {
             out.add(deepCopy(item));

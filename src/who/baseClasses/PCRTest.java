@@ -19,7 +19,8 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
     private double testValue_;
     private String note_;
 
-    public PCRTest(LocalDateTime time,
+    public PCRTest(
+            LocalDateTime time,
             String id,
             int pcrId,
             int workplaceId,
@@ -65,10 +66,6 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
 
     public LocalDateTime getTimeOfTest() {
         return timeOfTest_;
-    }
-
-    public void setTimeOfTest(LocalDateTime timeOfTest_) {
-        this.timeOfTest_ = timeOfTest_;
     }
 
     @Override
@@ -162,48 +159,24 @@ public class PCRTest implements Comparable<PCRTest>, Serializable, Exportable {
         return workplaceID_;
     }
 
-    public void setWorkplaceID(int workplaceID_) {
-        this.workplaceID_ = workplaceID_;
-    }
-
     public int getRegionID() {
         return regionID_;
-    }
-
-    public void setRegionID(int regionID_) {
-        this.regionID_ = regionID_;
     }
 
     public int getDistrictID() {
         return districtID_;
     }
 
-    public void setDistrictID(int districtID_) {
-        this.districtID_ = districtID_;
-    }
-
     public boolean getTestResult() {
         return result_;
-    }
-
-    public void setTestResult(boolean result_) {
-        this.result_ = result_;
     }
 
     public double getTestValue() {
         return testValue_;
     }
 
-    public void setTestValue(double testValue_) {
-        this.testValue_ = testValue_;
-    }
-
     public String getNote() {
         return note_;
-    }
-
-    public void setNote(String note_) {
-        this.note_ = note_;
     }
 
     public Person getPerson() {

@@ -17,7 +17,6 @@ public interface IDatabaseService {
     void deletePerson(String personID); //21
     List<PCRT_DateTime> getPersonTestsForPerson(String personID); //3
 
-
     PCRTest addTest(PCRTest test); //1
     PCRTest getPCRTestByID(int testID); //18
     PCRTest getTestByPersonByID(String personID, int testID); //2

@@ -253,7 +253,7 @@ public class BSTree<T extends Comparable<T>> {
         }
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outFile))) {
-            for (T value : this.inOrder(false)) {
+            for (T value : this.levelOrder(false)) {
                 if (value == null) continue;
                 if (value instanceof Exportable) {
                     writer.write(((Exportable) value).serialize());
@@ -276,8 +276,6 @@ public class BSTree<T extends Comparable<T>> {
                 if (obj instanceof Exportable) {
                     ((Exportable) obj).deserialize(line);
                     this.insert(obj);
-                } else {
-                    continue;
                 }
             }
         }

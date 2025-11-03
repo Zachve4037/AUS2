@@ -28,13 +28,6 @@ public class Person implements Comparable<Person>, Serializable, Exportable {
         this.pcrTestsById_ = new AVLTree<>();
     }
 
-    public void printPersonInfo() {
-        System.out.println("ID: " + this.ID_);
-        System.out.println("Name: " + this.name_);
-        System.out.println("Surname: " + this.surname_);
-        System.out.println("Birth Date: " + this.birthDate_);
-    }
-
     @Override
     public int compareTo(Person p) {
         if (p == null) return 1;
@@ -66,36 +59,16 @@ public class Person implements Comparable<Person>, Serializable, Exportable {
         return name_;
     }
 
-    public void setName(String name_) {
-        this.name_ = name_;
-    }
-
     public String getSurname() {
         return surname_;
-    }
-
-    public void setSurname(String surname_) {
-        this.surname_ = surname_;
     }
 
     public Date getBirthDate() {
         return birthDate_;
     }
 
-    public void setBirthDate(Date birthDate_) {
-        this.birthDate_ = birthDate_;
-    }
-
     public String getID() {
         return ID_;
-    }
-
-    public void setID(String ID_) {
-        this.ID_ = ID_;
-    }
-
-    public AVLTree<PCRT_DateTime> getPcrTestsByDate_() {
-        return this.pcrTestsByDate_;
     }
 
     public AVLTree<PCRTest> getPcrTestsById_() {

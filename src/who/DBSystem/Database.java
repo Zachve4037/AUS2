@@ -334,6 +334,7 @@ public class Database {
     }
 
     public void importFromFiles(String peoplePath, String testsPath) throws IOException {
+        this.nextTestID_ = 1;
         this.people_ = new AVLTree<>();
         this.people_.importFromFile(peoplePath, () -> new Person("", "", "", null));
 
