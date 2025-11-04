@@ -28,23 +28,15 @@
 - aby to komunikovalo s DatabaseServiceLayer
 - GUI
 - pocet vypisanych zaznamov
+- serializacia a deserializacia, cleanup
+- vycislene zlozitosti
+
 
 GENERATOR ZAZNAMOV DB
 - generator na nahodne atributy, ostatne udaje moze / nemusi zadat pouzivatel
 - na gui nejake tlacidlo na naplnenie DB, moznost zadat pocty (okresy, pouzivatelia)
 - nahodne vstupy
+- UML diagram tried
+- JAR
 
 ----------------------------------------------------------------------------------
-
-DB
-- serializacia a deserializacia, cleanup
-
-DOC
-- nemusi byt dlha
-- vycislene zlozitosti
-- UML diagram tried
-- AVL rotácie nakreslit a popisat
-- nakreslit si DB, na zaklade toho spocitat zlozitosti operacii plus popis operacii
-- popis architektury velmi strucne (pochvalit sa ak je nieco KURRRRRRRWA dobre)
-
-- JAR
