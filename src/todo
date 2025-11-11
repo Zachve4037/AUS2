@@ -50,8 +50,12 @@ HEAP FILE
 IRECORD - interface
 - equals(T): boolean - True / False
 - getSize(): int
-- getBytes: [pole bajtov]
-- fromBytes([]): void
+- getBytes: byte[]
+- fromBytes(byte[]): void
+
+IDATA - interface
+- createClass(): T
+- equals(T): boolean
 
 BINARNY SUBOR
 - zapisujeme pole bajtov repre. 1 blok dat na disku
@@ -64,8 +68,8 @@ BLOK
 - attr: pocet platnych zaznamov v bloku: validCount: int
 - data: T[]
 - getSize(): int - velkost bloku v bajtoch v heap file
-- getBytes(): [] - veysklada byty reprezentujuce blok
-- fromBytes([]): void - naplni blok datami z pola bajtov
+- getBytes(): byte[] - veysklada byty reprezentujuce blok
+- fromBytes(byte[]): void - naplni blok datami z pola bajtov
 
 MANAZEMENT VOLNYCH BLOKOV
 - v operacnej pamati
