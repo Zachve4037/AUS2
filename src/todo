@@ -40,3 +40,46 @@ GENERATOR ZAZNAMOV DB
 - JAR
 
 ----------------------------------------------------------------------------------
+
+
+HEAP FILE
+- insert(T): int - vracia adresu / index do suboru na obj
+- get(int adresa, T): T
+- delete(int adresa, T)
+
+IRECORD - interface
+- equals(T): boolean - True / False
+- getSize(): int
+- getBytes: [pole bajtov]
+- fromBytes([]): void
+
+BINARNY SUBOR
+- zapisujeme pole bajtov repre. 1 blok dat na disku
+- seak()
+- size(): int - vrati velkost binarneho suboru
+- parametre do konstruktora:
+    cesta k suboru, genericky typ, velkost bloku dat na disku
+
+BLOK
+- attr: pocet platnych zaznamov v bloku: validCount: int
+- data: T[]
+- getSize(): int - velkost bloku v bajtoch v heap file
+- getBytes(): [] - veysklada byty reprezentujuce blok
+- fromBytes([]): void - naplni blok datami z pola bajtov
+
+MANAZEMENT VOLNYCH BLOKOV
+- v operacnej pamati
+- zoznam adries volnych blokov na disku
+- zoznam adries ciastocne volnych blokov na disku
+- ulozit do zo suboru (tak aby bolo dobre)
+- moze byt binarny / textovy subor
+
+TESTER
+- testuje funkcionalitu dat nad heap file
+
+DEBUG
+- subor sekvencne prejdem a vypisem do GUI
+
+ZIADNA SERIALIZACIA DAT
+BACHA NA 2BYTOVE A 1BYTOVY STRING
+NERIESIT ENDIANITU
