@@ -13,7 +13,7 @@ public class Block<T extends IRecord> {
         this.data = (T[]) new IRecord[capacity];
 
         for (int i = 0; i < capacity; i++) {
-            data[i] = type.createClass();
+            this.data[i] = type.createClass();
         }
     }
 
@@ -29,12 +29,8 @@ public class Block<T extends IRecord> {
         return this.data;
     }
 
-    public int getCapacity() {
-        return this.capacity;
-    }
-
     public boolean isFull() {
-        return this.validCount >= capacity;
+        return this.validCount >= this.capacity;
     }
 
     public boolean isEmpty() {
@@ -42,25 +38,25 @@ public class Block<T extends IRecord> {
     }
 
     public int getSize() {
-        return 4 + (capacity * data[0].getSize());
+        return 4 + (this.capacity * this.data[0].getSize());
     }
 
     public byte[] getBytes() {
         ByteBuffer buffer = ByteBuffer.allocate(getSize());
-        buffer.putInt(validCount);
-        for (int i = 0; i < capacity; i++) {
-            buffer.put(data[i].getBytes());
+        buffer.putInt(this.validCount);
+        for (int i = 0; i < this.capacity; i++) {
+            buffer.put(this.data[i].getBytes());
         }
         return buffer.array();
     }
 
     public void fromBytes(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        validCount = buffer.getInt();
-        for (int i = 0; i < capacity; i++) {
-            byte[] recordBytes = new byte[data[i].getSize()];
+        this.validCount = buffer.getInt();
+        for (int i = 0; i < this.capacity; i++) {
+            byte[] recordBytes = new byte[this.data[i].getSize()];
             buffer.get(recordBytes);
-            data[i].fromBytes(recordBytes);
+            this.data[i].fromBytes(recordBytes);
         }
     }
 }

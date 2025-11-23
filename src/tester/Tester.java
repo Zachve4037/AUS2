@@ -1,10 +1,14 @@
 package tester;
 
+import binary.HeapFile;
+import binary.IRecord;
 import trees.BSTree;
 import trees.BSTNode;
 import trees.avl.AVLNode;
 import trees.avl.AVLTree;
 
+import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.*;
 
 public class Tester {
@@ -416,4 +420,116 @@ public class Tester {
         }
         return computed;
     }
+
+    public void testHeapFile() {
+        System.out.println("testHeapFile");
+        for (int j = 1; j < 100_000; j++) {
+            try {
+                File f = new File("heapfile_test.dat");
+                if (f.exists()) f.delete();
+                File metaFile = new File("heapfile_test.dat.meta");
+                if (metaFile.exists()) metaFile.delete();
+                try (RandomAccessFile raf = new RandomAccessFile(f, "rw")) {
+                    HeapFile<IntRecord> heapFile = new HeapFile<>(
+                            raf,
+                            new IntData(),
+                            Integer.BYTES,
+                            512,
+                            "heapfile_test.dat.meta"
+                    );
+
+                    ArrayList<Entry> pom = new ArrayList<>();
+                    Random rng = new Random(j);
+                    for (int i = 0; i < 20/*OPERATIONS*/; i++) {
+                        int operation = rng.nextInt(100);
+                        if (operation < 50) {
+                            int val = Math.abs(rng.nextInt());
+                            IntRecord rec = new IntRecord(val);
+                            int addr = heapFile.insert(rec);
+                            if (addr == -1) {
+                                throw new AssertionError("Insertion failed at " + j);
+                            }
+                            pom.add(new Entry(val, addr));
+                        } else {
+                            if (!pom.isEmpty()) {
+                                int index = rng.nextInt(pom.size());
+                                Entry e = pom.get(index);
+                                if (operation < 75) {
+                                    heapFile.delete(e.address, new IntRecord(e.value));
+                                    pom.remove(index);
+                                } else {
+                                    IntRecord res = heapFile.get(e.address, new IntRecord(e.value));
+                                    if (res == null) {
+                                        throw new AssertionError("error at " + j);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (i % Math.max(1, OPERATIONS / 10) == 0) {
+                            System.out.println("Operation " + i + " / " + OPERATIONS + " -- entries: " + pom.size());
+                            heapFile.print();
+                        }
+                    }
+
+                    System.out.println("Final dump:");
+                    heapFile.print();
+                    heapFile.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static class Entry {
+        final int value;
+        final int address;
+        Entry(int value, int address) { this.value = value; this.address = address; }
+    }
+
+    private static class IntRecord implements IRecord {
+        private int value;
+
+        IntRecord() { this.value = 0; }
+        IntRecord(int v) { this.value = v; }
+        int getValue() { return value; }
+
+        @Override
+        public boolean equals(IRecord other) {
+            if (!(other instanceof IntRecord)) return false;
+            return this.value == ((IntRecord) other).value;
+        }
+
+        @Override
+        public int getSize() {
+            return Integer.BYTES;
+        }
+
+        @Override
+        public byte[] getBytes() {
+            java.nio.ByteBuffer bb = java.nio.ByteBuffer.allocate(Integer.BYTES);
+            bb.putInt(value);
+            return bb.array();
+        }
+
+        @Override
+        public void fromBytes(byte[] bytes) {
+            java.nio.ByteBuffer bb = java.nio.ByteBuffer.wrap(bytes);
+            this.value = bb.getInt();
+        }
+
+        @Override
+        public String toString() {
+            return "IntRecord(" + value + ")";
+        }
+    }
+
+    private static class IntData implements binary.IData<IntRecord> {
+        @Override
+        public IntRecord createClass() {
+            return new IntRecord();
+        }
+    }
+
 }

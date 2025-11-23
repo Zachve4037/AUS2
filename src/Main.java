@@ -8,11 +8,12 @@ import javax.swing.*;
 
 public class Main {
     public static void main() {
-        SwingUtilities.invokeLater(() -> {
-            DatabaseGUI gui = new DatabaseGUI();
-            gui.setVisible(true);
-        });
-//        Tester teste = new Tester();
+//        SwingUtilities.invokeLater(() -> {
+//            DatabaseGUI gui = new DatabaseGUI();
+//            gui.setVisible(true);
+//        });
+        Tester teste = new Tester();
+        teste.testHeapFile();
 //        teste.testAvl();
 //        teste.testAvlBstInsert();
 //        teste.testAvlBstDelete();

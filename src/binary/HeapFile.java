@@ -9,16 +9,16 @@ public class HeapFile<T extends IRecord> {
     private final IData<T> type;
     private final int blockSize;
     private final int blockingFactor;
-    private final String medatadaPath;
+    private final String metadadaPath;
     private final List<Integer> partiallyFreeBlocks;
     private final List<Integer> fullyEmptyBlocks;
     private int totalBlocks;
 
-    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize, String medatadaPath) throws IOException {
+    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize, String metadadaPath) throws IOException {
         this.file = file;
         this.type = type;
         this.blockSize = blockSize;
-        this.medatadaPath = medatadaPath;
+        this.metadadaPath = metadadaPath;
         this.partiallyFreeBlocks = new ArrayList<>();
         this.fullyEmptyBlocks = new ArrayList<>();
 
@@ -33,36 +33,43 @@ public class HeapFile<T extends IRecord> {
     }
 
     public int insert(T record) throws IOException {
-        if (record == null) throw new IllegalArgumentException("Cannot insert null!");
+        if (record == null) return -1;
+
         Block<T> block;
         int address;
 
-        if (!this.partiallyFreeBlocks.isEmpty()) {
-            address = this.partiallyFreeBlocks.getFirst();
-            block = readBlock(address);
-        } else if (!this.fullyEmptyBlocks.isEmpty()) {
-            address = this.fullyEmptyBlocks.removeFirst();
-            block = new Block<>(this.blockingFactor, this.type);
-            this.partiallyFreeBlocks.add(address);
-        } else {
-            address = this.totalBlocks++;
-            block = new Block<>(this.blockingFactor, this.type);
-            this.partiallyFreeBlocks.add(address);
+        while (true) {
+            if (!this.partiallyFreeBlocks.isEmpty()) {
+                address = this.partiallyFreeBlocks.getFirst();
+                block = readBlock(address);
+
+                if (block.isFull()) {
+                    this.partiallyFreeBlocks.removeFirst();
+                    continue;
+                }
+            } else if (!this.fullyEmptyBlocks.isEmpty()) {
+                address = this.fullyEmptyBlocks.removeFirst();
+                block = new Block<>(this.blockingFactor, this.type);
+                this.partiallyFreeBlocks.add(address);
+            } else {
+                address = this.totalBlocks++;
+                block = new Block<>(this.blockingFactor, this.type);
+                this.partiallyFreeBlocks.add(address);
+            }
+            break;
         }
 
-        T[] data = block.getData();
-        int validCount = block.getValidCount();
-        data[validCount] = record;
-        block.setValidCount(validCount + 1);
+        block.getData()[block.getValidCount()] = record;
+        block.setValidCount(block.getValidCount() + 1);
 
         if (block.isFull()) {
             this.partiallyFreeBlocks.remove(Integer.valueOf(address));
         }
 
         writeBlock(address, block);
-
         return address;
     }
+
 
     public T get(int address, T data) throws IOException {
         if (address < 0 || address >= this.totalBlocks) {
@@ -73,7 +80,7 @@ public class HeapFile<T extends IRecord> {
         T[] records = block.getData();
 
         for (int i = 0; i < block.getValidCount(); i++) {
-            if (records[i].myEquals(data)) {
+            if (records[i].equals(data)) {
                 return records[i];
             }
         }
@@ -83,14 +90,14 @@ public class HeapFile<T extends IRecord> {
 
     public void delete(int address, T data) throws IOException {
         if (address < 0 || address >= totalBlocks) {
-            return;
+            throw new IllegalArgumentException();
         }
         Block<T> block = readBlock(address);
         T[] records = block.getData();
         int validCount = block.getValidCount();
 
         for (int i = 0; i < validCount; i++) {
-            if (records[i].myEquals(data)) {
+            if (records[i].equals(data)) {
                 T temp = records[i];
                 records[i] = records[validCount - 1];
                 records[validCount - 1] = temp;
@@ -108,16 +115,15 @@ public class HeapFile<T extends IRecord> {
                     this.partiallyFreeBlocks.remove(Integer.valueOf(address));
                     this.fullyEmptyBlocks.add(address);
 
-                    truncateTrailingEmptyBlocks();
+                    cutEmptyFileBlocks();
                 }
 
                 writeBlock(address, block);
-                return;
             }
         }
     }
 
-    private void truncateTrailingEmptyBlocks() throws IOException {
+    private void cutEmptyFileBlocks() throws IOException {
         while (this.totalBlocks > 0 && this.fullyEmptyBlocks.contains(this.totalBlocks - 1)) {
             this.fullyEmptyBlocks.remove(Integer.valueOf(this.totalBlocks - 1));
             this.totalBlocks--;
@@ -128,13 +134,6 @@ public class HeapFile<T extends IRecord> {
 
     public void seek(int address) throws IOException {
         this.file.seek((long) address * this.blockSize);
-    }
-
-    public void truncateFile() throws IOException {
-        this.file.setLength(0);
-        this.totalBlocks = 0;
-        this.partiallyFreeBlocks.clear();
-        this.fullyEmptyBlocks.clear();
     }
 
     public void close() throws IOException {
@@ -179,7 +178,7 @@ public class HeapFile<T extends IRecord> {
     }
 
     private void saveMetadata() throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(this.medatadaPath))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(this.metadadaPath))) {
             oos.writeInt(this.totalBlocks);
             oos.writeInt(this.partiallyFreeBlocks.size());
             for (int addr : this.partiallyFreeBlocks) {
@@ -193,7 +192,7 @@ public class HeapFile<T extends IRecord> {
     }
 
     private void loadMetadata() throws IOException {
-        File metaFile = new File(this.medatadaPath);
+        File metaFile = new File(this.metadadaPath);
         if (!metaFile.exists()) {
             this.totalBlocks = (int) (this.file.length() / this.blockSize);
             return;
@@ -210,6 +209,15 @@ public class HeapFile<T extends IRecord> {
             int emptyCount = ois.readInt();
             for (int i = 0; i < emptyCount; i++) {
                 this.fullyEmptyBlocks.add(ois.readInt());
+            }
+
+            long actualSize = this.file.length();
+            long expectedSize = (long) this.totalBlocks * this.blockSize;
+            if (actualSize < expectedSize) {
+                this.totalBlocks = 0;
+                this.partiallyFreeBlocks.clear();
+                this.fullyEmptyBlocks.clear();
+                this.file.setLength(0);
             }
         }
     }
