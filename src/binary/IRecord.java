@@ -1,7 +1,7 @@
 package binary;
 
-public interface IRecord<T> {
-    boolean myEquals(T other);
+public interface IRecord {
+    boolean myEquals(IRecord other);
     int getSize();
     byte[] getBytes();
     void fromBytes(byte[] bytes);
