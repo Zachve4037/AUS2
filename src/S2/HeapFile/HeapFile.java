@@ -1,0 +1,251 @@
+package S2.HeapFile;
+
+import S1.trees.avl.AVLTree;
+
+import java.io.*;
+
+public class HeapFile<T extends IRecord> {
+    private final RandomAccessFile file;
+    private final IData<T> type;
+    private final int blockSize;
+    private final int blockingFactor;
+    private final String metadadaPath;
+    private final AVLTree<Integer> partiallyFreeBlocks;
+    private final AVLTree<Integer> fullyEmptyBlocks;
+    private int totalBlocks;
+
+    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize, String metadataPath) throws IOException {
+        this.file = file;
+        this.type = type;
+        this.blockSize = blockSize;
+        this.metadadaPath = metadataPath;
+        this.partiallyFreeBlocks = new AVLTree<>();
+        this.fullyEmptyBlocks = new AVLTree<>();
+
+        this.blockingFactor = (blockSize - 4) / recordSize;
+
+        if (blockingFactor <= 0) {
+            throw new IllegalArgumentException("Block size is too small to hold any record!");
+        }
+        this.totalBlocks = 0;
+
+        this.loadMetadata();
+    }
+
+    public int insert(T record) throws IOException {
+        if (record == null) return -1;
+
+        Block<T> block;
+        int address;
+
+        if (!(this.partiallyFreeBlocks.getNodeCount() == 0)) {
+            address = this.partiallyFreeBlocks.findMin(this.partiallyFreeBlocks.getRoot());
+            block = readBlock(address);
+        } else if (!(this.fullyEmptyBlocks.getNodeCount() == 0)) {
+            address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
+            this.fullyEmptyBlocks.delete(address);
+            block = new Block<>(this.blockingFactor, this.type);
+            this.partiallyFreeBlocks.insert(address);
+        } else {
+            address = this.totalBlocks++;
+            block = new Block<>(this.blockingFactor, this.type);
+            this.partiallyFreeBlocks.insert(address);
+        }
+
+        block.getData()[block.getValidCount()] = record;
+        block.setValidCount(block.getValidCount() + 1);
+
+        // ak bol blok prazdny, tak je staly oznaceny ako prazdny -> partiallyFreeBlocks
+        // validovat s test kejsom ze sa napcha prave jeden block -> malo by to uplne obchadzat partiallyFreeBlocks
+        if (block.isFull()) {
+            this.partiallyFreeBlocks.delete(address);
+        }
+
+        writeBlock(address, block);
+        return address;
+    }
+
+
+    public T get(int address, T data) throws IOException {
+        if (address < 0 || address >= this.totalBlocks) {
+            return null;
+        }
+
+        Block<T> block = readBlock(address);
+        T[] records = block.getData();
+
+        for (int i = 0; i < block.getValidCount(); i++) {
+            if (records[i].equals(data)) {
+                return records[i];
+            }
+        }
+        return null;
+    }
+
+    public void delete(int address, T data) throws IOException {
+        if (address < 0 || address >= totalBlocks) {
+            throw new IndexOutOfBoundsException(); // vie tu byt return, ale kvoli testeru aby mi to padlo pri chybe
+        }
+        Block<T> block = readBlock(address);
+        T[] records = block.getData();
+        int validCount = block.getValidCount();
+
+        for (int i = 0; i < validCount; i++) {
+            if (records[i].equals(data)) {
+                T temp = records[i];
+                records[i] = records[validCount - 1];
+                records[validCount - 1] = temp;
+
+                block.setValidCount(validCount - 1);
+
+                boolean wasFull = validCount == this.blockingFactor;
+                boolean nowEmpty = validCount == 1;
+
+                // nemusi platit kvoli nizkemu blockovaciemu faktoru, moze byt uplne prazdny
+                if (wasFull && !nowEmpty) {
+                    this.partiallyFreeBlocks.insert(address);
+                }
+
+                if (nowEmpty) {
+                    if (!wasFull) {
+                        this.partiallyFreeBlocks.delete(address); // toto tiez nemusi platit z rovnakeho dovodu vyssie
+                    }
+                    this.fullyEmptyBlocks.insert(address);
+                    cutEmptyFileBlocks();
+                    if (address < this.totalBlocks) {
+                        writeBlock(address, block);
+                    }
+                } else {
+                // updatnut address aby sa nenafukol file naspat po cutEmptyFileBlocks
+                    writeBlock(address, block);
+                }
+                return;
+            }
+        }
+    }
+
+    // ak budu zoradene, tak nerobit contains ale pozriet rovno koniec
+    private void cutEmptyFileBlocks() throws IOException {
+        while (this.totalBlocks > 0 && this.fullyEmptyBlocks.findMax(this.fullyEmptyBlocks.getRoot()) != null) {
+            this.fullyEmptyBlocks.delete(this.totalBlocks - 1);
+            this.totalBlocks--;
+        }
+        this.file.setLength((long) this.totalBlocks * this.blockSize);
+    }
+
+
+    public void seek(int address) throws IOException {
+        this.file.seek((long) address * this.blockSize);
+    }
+
+    public void close() throws IOException {
+        saveMetadata();
+        file.close();
+    }
+
+    public void print() throws IOException {
+        System.out.println("=== Heap File Contents ===");
+        System.out.println("Total blocks: " + this.totalBlocks);
+        System.out.println("Blocking factor: " + this.blockingFactor);
+        System.out.println("Partially free blocks: " + this.partiallyFreeBlocks);
+        System.out.println("Fully empty blocks: " + this.fullyEmptyBlocks);
+        System.out.println();
+
+        for (int i = 0; i < this.totalBlocks; i++) {
+            Block<T> block = readBlock(i);
+            System.out.println("Block " + i + " (Valid: " + block.getValidCount() + "/" + this.blockingFactor + "):");
+
+            T[] records = block.getData();
+            for (int j = 0; j < this.blockingFactor; j++) {
+                String status = j < block.getValidCount() ? "VALID" : "INVALID";
+                System.out.println("  [" + j + "] " + status + ": " + records[j]);
+            }
+            System.out.println();
+        }
+    }
+
+    private Block<T> readBlock(int address) throws IOException {
+        seek(address);
+        byte[] bytes = new byte[this.blockSize];
+        this.file.readFully(bytes);
+
+        Block<T> block = new Block<>(this.blockingFactor, this.type);
+        block.fromBytes(bytes);
+        return block;
+    }
+
+    private void writeBlock(int blockAddress, Block<T> block) throws IOException {
+        seek(blockAddress);
+        this.file.write(block.getBytes());
+    }
+
+    private void saveMetadata() throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             DataOutputStream dos = new DataOutputStream(baos)) {
+
+            dos.writeInt(this.totalBlocks);
+
+            dos.writeInt(this.partiallyFreeBlocks.getNodeCount());
+            for (int addr : this.partiallyFreeBlocks.inOrder(false)) {
+                dos.writeInt(addr);
+            }
+
+            dos.writeInt(this.fullyEmptyBlocks.getNodeCount());
+            for (int addr : this.fullyEmptyBlocks.inOrder(false)) {
+                dos.writeInt(addr);
+            }
+
+            dos.flush();
+
+            byte[] metadataBytes = baos.toByteArray();
+
+            try (RandomAccessFile metaFile = new RandomAccessFile(this.metadadaPath, "rw")) {
+                int offset = 0;
+                while (offset < metadataBytes.length) {
+                    int toWrite = Math.min(this.blockSize, metadataBytes.length - offset);
+                    metaFile.write(metadataBytes, offset, toWrite);
+                    offset += toWrite;
+                }
+                metaFile.setLength(offset);
+            }
+        }
+    }
+
+    private void loadMetadata() throws IOException {
+        File metaFile = new File(this.metadadaPath);
+        if (!metaFile.exists()) {
+            this.totalBlocks = (int) (this.file.length() / this.blockSize);
+            return;
+        }
+
+        try (RandomAccessFile metaRAF = new RandomAccessFile(this.metadadaPath, "r")) {
+            byte[] metadataBytes = new byte[(int) metaRAF.length()];
+            metaRAF.readFully(metadataBytes);
+
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(metadataBytes);
+                 DataInputStream dis = new DataInputStream(bais)) {
+
+                this.totalBlocks = dis.readInt();
+
+                int partialCount = dis.readInt();
+                for (int i = 0; i < partialCount; i++) {
+                    this.partiallyFreeBlocks.insert(dis.readInt());
+                }
+
+                int emptyCount = dis.readInt();
+                for (int i = 0; i < emptyCount; i++) {
+                    this.fullyEmptyBlocks.insert(dis.readInt());
+                }
+            }
+
+            long actualSize = this.file.length();
+            long expectedSize = (long) this.totalBlocks * this.blockSize;
+            if (actualSize < expectedSize) {
+                this.totalBlocks = 0;
+                this.partiallyFreeBlocks.clear();
+                this.fullyEmptyBlocks.clear();
+                this.file.setLength(0);
+            }
+        }
+    }
+}

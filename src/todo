@@ -3,7 +3,7 @@
 - ziaden stack
 - rebalance
 - spravit si level order travers
-- tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
+- S1.tester ma porovnavat implementovane struktury porovnat s nejakou fungujucou metodou
   namerat ako rychlo nieco ta struktura robit
 - test na vsetky public operacie, spravne pomocou pomocnej struktury
   min max podla zadania z cvika
