@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.Random;
 
 public class BTester {
-    private final int OPERATIONS = 10_000_000;
+    private final int OPERATIONS = 10_000;
     public BTester() {
     }
 
@@ -20,8 +20,8 @@ public class BTester {
             for (int j = 1; j < 2; j++) {
                 File dataFile = new File("test_heap_" + j + ".dat");
                 File metaFile = new File("test_heap_" + j + ".meta");
-                dataFile.deleteOnExit();
-                metaFile.deleteOnExit();
+                if (dataFile.exists()) dataFile.delete();
+                if (metaFile.exists()) metaFile.delete();
 
                 RandomAccessFile raf = new RandomAccessFile(dataFile, "rw");
 

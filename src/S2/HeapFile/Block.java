@@ -1,5 +1,6 @@
 package S2.HeapFile;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 
 public class Block<T extends IRecord> {
@@ -7,10 +8,11 @@ public class Block<T extends IRecord> {
     private final int capacity;
     private T[] data;
 
-    Block(int capacity, IData<T> type) {
+    public Block(int capacity, IData<T> type) {
         this.validCount = 0;
         this.capacity = capacity;
-        this.data = (T[]) new IRecord[capacity];
+        T temp = type.createClass();
+        this.data = (T[]) Array.newInstance(temp.getClass(), capacity);
 
         for (int i = 0; i < capacity; i++) {
             this.data[i] = type.createClass();
@@ -51,7 +53,7 @@ public class Block<T extends IRecord> {
 
         int recordSize = this.data[0].getSize();
         for (int i = this.validCount; i < this.capacity; i++) {
-            buffer.put(new byte[recordSize]); // Write empty records
+            buffer.put(new byte[recordSize]);
         }
 
         return buffer.array();
@@ -61,7 +63,6 @@ public class Block<T extends IRecord> {
     public void fromBytes(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         this.validCount = buffer.getInt();
-
 
         for (int i = 0; i < this.capacity; i++) {
             byte[] recordBytes = new byte[this.data[i].getSize()];

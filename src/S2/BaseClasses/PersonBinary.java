@@ -68,6 +68,17 @@ public class PersonBinary implements IRecord {
         this.id = readFixedString(buffer, 10);
     }
 
+    @Override
+    public String toString() {
+        String pid = this.getId() != null ? this.getId() : "<null>";
+        String name = this.name != null ? this.name : "";
+        String surname = this.surname != null ? this.surname : "";
+        String birth = this.birthDate != null
+                ? new java.text.SimpleDateFormat("yyyy-MM-dd").format(this.birthDate)
+                : "unknown";
+        return String.format("Person[id=%s, name=%s, surname=%s, birth=%s]", pid, name, surname, birth);
+    }
+
 
     private void writeFixedString(ByteBuffer buffer, String str, int maxChars) {
         byte[] bytes = str.getBytes(java.nio.charset.StandardCharsets.UTF_8);
