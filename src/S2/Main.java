@@ -1,7 +1,12 @@
 package S2;
 
+import S2.Tester.BTester;
+
 public class Main {
-    public static void main(String[] args) {
-        System.out.println("S2 Main class executed.");
+    static void main() {
+        BTester tester = new BTester();
+        tester.testHeapFile();
+//        tester.testLeftmostInsertion();
+//        tester.testLastBlockEmpty();
     }
 }

@@ -38,10 +38,10 @@ public class HeapFile<T extends IRecord> {
         Block<T> block;
         int address;
 
-        if (!(this.partiallyFreeBlocks.getNodeCount() == 0)) {
+        if (this.partiallyFreeBlocks.getNodeCount() > 0) {
             address = this.partiallyFreeBlocks.findMin(this.partiallyFreeBlocks.getRoot());
             block = readBlock(address);
-        } else if (!(this.fullyEmptyBlocks.getNodeCount() == 0)) {
+        } else if (this.fullyEmptyBlocks.getNodeCount() > 0) {
             address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
             this.fullyEmptyBlocks.delete(address);
             block = new Block<>(this.blockingFactor, this.type);
@@ -55,8 +55,6 @@ public class HeapFile<T extends IRecord> {
         block.getData()[block.getValidCount()] = record;
         block.setValidCount(block.getValidCount() + 1);
 
-        // ak bol blok prazdny, tak je staly oznaceny ako prazdny -> partiallyFreeBlocks
-        // validovat s test kejsom ze sa napcha prave jeden block -> malo by to uplne obchadzat partiallyFreeBlocks
         if (block.isFull()) {
             this.partiallyFreeBlocks.delete(address);
         }
@@ -82,6 +80,7 @@ public class HeapFile<T extends IRecord> {
         return null;
     }
 
+
     public void delete(int address, T data) throws IOException {
         if (address < 0 || address >= totalBlocks) {
             throw new IndexOutOfBoundsException(); // vie tu byt return, ale kvoli testeru aby mi to padlo pri chybe
@@ -101,14 +100,13 @@ public class HeapFile<T extends IRecord> {
                 boolean wasFull = validCount == this.blockingFactor;
                 boolean nowEmpty = validCount == 1;
 
-                // nemusi platit kvoli nizkemu blockovaciemu faktoru, moze byt uplne prazdny
                 if (wasFull && !nowEmpty) {
                     this.partiallyFreeBlocks.insert(address);
                 }
 
                 if (nowEmpty) {
                     if (!wasFull) {
-                        this.partiallyFreeBlocks.delete(address); // toto tiez nemusi platit z rovnakeho dovodu vyssie
+                        this.partiallyFreeBlocks.delete(address);
                     }
                     this.fullyEmptyBlocks.insert(address);
                     cutEmptyFileBlocks();
@@ -116,7 +114,6 @@ public class HeapFile<T extends IRecord> {
                         writeBlock(address, block);
                     }
                 } else {
-                // updatnut address aby sa nenafukol file naspat po cutEmptyFileBlocks
                     writeBlock(address, block);
                 }
                 return;
@@ -124,14 +121,19 @@ public class HeapFile<T extends IRecord> {
         }
     }
 
-    // ak budu zoradene, tak nerobit contains ale pozriet rovno koniec
     private void cutEmptyFileBlocks() throws IOException {
-        while (this.totalBlocks > 0 && this.fullyEmptyBlocks.findMax(this.fullyEmptyBlocks.getRoot()) != null) {
-            this.fullyEmptyBlocks.delete(this.totalBlocks - 1);
-            this.totalBlocks--;
+        while (this.totalBlocks > 0) {
+            Integer maxEmpty = this.fullyEmptyBlocks.findMax(this.fullyEmptyBlocks.getRoot());
+            if (maxEmpty != null && maxEmpty == this.totalBlocks - 1) {
+                this.fullyEmptyBlocks.delete(this.totalBlocks - 1);
+                this.totalBlocks--;
+            } else {
+                break;
+            }
         }
         this.file.setLength((long) this.totalBlocks * this.blockSize);
     }
+
 
 
     public void seek(int address) throws IOException {
@@ -165,6 +167,12 @@ public class HeapFile<T extends IRecord> {
     }
 
     private Block<T> readBlock(int address) throws IOException {
+        long blockPosition = (long) address * this.blockSize;
+
+        if (blockPosition >= this.file.length()) {
+            return new Block<>(this.blockingFactor, this.type);
+        }
+
         seek(address);
         byte[] bytes = new byte[this.blockSize];
         this.file.readFully(bytes);
@@ -176,8 +184,14 @@ public class HeapFile<T extends IRecord> {
 
     private void writeBlock(int blockAddress, Block<T> block) throws IOException {
         seek(blockAddress);
-        this.file.write(block.getBytes());
+        byte[] blockData = block.getBytes();
+
+        byte[] paddedBlock = new byte[this.blockSize];
+        System.arraycopy(blockData, 0, paddedBlock, 0, Math.min(blockData.length, this.blockSize));
+
+        this.file.write(paddedBlock);
     }
+
 
     private void saveMetadata() throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -214,13 +228,20 @@ public class HeapFile<T extends IRecord> {
     private void loadMetadata() throws IOException {
         File metaFile = new File(this.metadadaPath);
         if (!metaFile.exists()) {
-            this.totalBlocks = (int) (this.file.length() / this.blockSize);
+            this.totalBlocks = 0;
             return;
         }
 
-        try (RandomAccessFile metaRAF = new RandomAccessFile(this.metadadaPath, "r")) {
-            byte[] metadataBytes = new byte[(int) metaRAF.length()];
-            metaRAF.readFully(metadataBytes);
+        try (RandomAccessFile metaRAF = new RandomAccessFile(this.metadadaPath, "r");
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            byte[] blockBuffer = new byte[this.blockSize];
+            int bytesRead;
+            while ((bytesRead = metaRAF.read(blockBuffer)) != -1) {
+                baos.write(blockBuffer, 0, bytesRead);
+            }
+
+            byte[] metadataBytes = baos.toByteArray();
 
             try (ByteArrayInputStream bais = new ByteArrayInputStream(metadataBytes);
                  DataInputStream dis = new DataInputStream(bais)) {
@@ -248,4 +269,5 @@ public class HeapFile<T extends IRecord> {
             }
         }
     }
+
 }

@@ -44,19 +44,30 @@ public class Block<T extends IRecord> {
     public byte[] getBytes() {
         ByteBuffer buffer = ByteBuffer.allocate(getSize());
         buffer.putInt(this.validCount);
-        for (int i = 0; i < this.capacity; i++) {
+
+        for (int i = 0; i < this.validCount; i++) {
             buffer.put(this.data[i].getBytes());
         }
+
+        int recordSize = this.data[0].getSize();
+        for (int i = this.validCount; i < this.capacity; i++) {
+            buffer.put(new byte[recordSize]); // Write empty records
+        }
+
         return buffer.array();
     }
+
 
     public void fromBytes(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         this.validCount = buffer.getInt();
+
+
         for (int i = 0; i < this.capacity; i++) {
             byte[] recordBytes = new byte[this.data[i].getSize()];
             buffer.get(recordBytes);
             this.data[i].fromBytes(recordBytes);
         }
     }
+
 }
