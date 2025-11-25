@@ -17,8 +17,6 @@ public class HeapDumpDialog extends JDialog {
     private final JTextArea outputArea;
 
     private static final int RECORD_SIZE = 176;
-    private static final int BLOCK_SIZE = 512;
-    private static final int BLOCKING_FACTOR = (BLOCK_SIZE - 4) / RECORD_SIZE;
 
     public HeapDumpDialog(Frame owner, File dataFile, File metaFile) {
         super(owner, "Heap Dump: " + (dataFile != null ? dataFile.getName() : "unknown"), true);
@@ -76,7 +74,7 @@ public class HeapDumpDialog extends JDialog {
         if (metaFile.exists()) {
             try (RandomAccessFile metaRaf = new RandomAccessFile(metaFile, "r");
                  ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                byte[] buf = new byte[BLOCK_SIZE];
+                byte[] buf = new byte[4096];
                 int r;
                 while ((r = metaRaf.read(buf)) != -1) {
                     baos.write(buf, 0, r);
@@ -93,7 +91,6 @@ public class HeapDumpDialog extends JDialog {
                     metaTruncated = true;
                 }
             } catch (IOException ex) {
-                // treat as truncated/unreadable
                 metaTruncated = true;
             }
         } else {
@@ -104,20 +101,31 @@ public class HeapDumpDialog extends JDialog {
         if (metaTruncated) sb.append("  (truncated)");
         sb.append("\n");
 
-        long fileBlocks = dataFile.exists() ? (dataFile.length() / BLOCK_SIZE) : 0;
-        // filter and deduplicate meta entries, ignore obviously invalid indices
+        int blockSize = 512;
+        if (dataFile.exists() && metaTotalBlocks > 0) {
+            long candidate = dataFile.length() / metaTotalBlocks;
+            int minAllowed = 4 + RECORD_SIZE;
+            if (candidate >= minAllowed && candidate <= Integer.MAX_VALUE) {
+                blockSize = (int) candidate;
+            }
+        }
+
+        int blockingFactor = Math.max(1, (blockSize - 4) / RECORD_SIZE);
+
+        long fileBlocks = dataFile.exists() ? (dataFile.length() / blockSize) : 0;
         Set<Integer> partialSet = new TreeSet<>();
         Set<Integer> emptySet = new TreeSet<>();
-        int maxAllowed = (int) Math.max(0, fileBlocks + 10_000);
+        int maxAllowed = (int) Math.max(-1, fileBlocks - 1);
 
         for (int p : partials) if (p >= 0 && p <= maxAllowed) partialSet.add(p);
         for (int e : empties)  if (e >= 0 && e <= maxAllowed) emptySet.add(e);
 
+        sb.append("Detected blockSize = ").append(blockSize).append(", blockingFactor = ").append(blockingFactor).append("\n");
         sb.append("Partially free blocks: ").append(partialSet).append("\n");
         sb.append("Fully empty blocks: ").append(emptySet).append("\n\n");
 
         if (metaRaw != null) {
-            sb.append("Metadata raw (hex, first 64 bytes): ").append(bytesToHex(metaRaw, 0, Math.min(64, metaRaw.length))).append("\n\n");
+            sb.append("Metadata raw (binary, first 64 bytes): ").append(bytesToBinary(metaRaw, 0, Math.min(64, metaRaw.length))).append("\n\n");
         }
 
         if (!dataFile.exists()) {
@@ -126,16 +134,23 @@ public class HeapDumpDialog extends JDialog {
         }
 
         try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
-            fileBlocks = raf.length() / BLOCK_SIZE;
+            fileBlocks = raf.length() / blockSize;
             sb.append("Data blocks on disk: ").append(fileBlocks).append("\n\n");
 
-            int maxIndex = (int) Math.max(fileBlocks - 1, metaTotalBlocks - 1);
-            if (maxIndex < 0) maxIndex = (int) (fileBlocks - 1);
+            if (metaTotalBlocks > fileBlocks) {
+                sb.append(String.format("Warning: metadata claims %d blocks but data file contains %d blocks. Showing only on-disk blocks.\n\n", metaTotalBlocks, fileBlocks));
+            }
+
+            int maxIndex = (int) (fileBlocks - 1);
+            if (maxIndex < 0) {
+                sb.append("(no blocks present on disk)\n");
+                return sb.toString();
+            }
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
             for (int b = 0; b <= maxIndex; b++) {
-                long offset = (long) b * BLOCK_SIZE;
+                long offset = (long) b * blockSize;
                 sb.append("Block ").append(b).append(" @ offset ").append(offset);
 
                 if (offset + 4 > raf.length()) {
@@ -144,19 +159,17 @@ public class HeapDumpDialog extends JDialog {
                 }
 
                 raf.seek(offset);
-                byte[] blockBytes = new byte[BLOCK_SIZE];
+                byte[] blockBytes = new byte[blockSize];
                 int actuallyRead = raf.read(blockBytes);
                 if (actuallyRead <= 0) {
                     sb.append("  (unable to read)\n\n");
                     continue;
                 }
-                if (actuallyRead < BLOCK_SIZE) {
-                    // pad remaining bytes with zeros
-                    Arrays.fill(blockBytes, actuallyRead, BLOCK_SIZE, (byte) 0);
+                if (actuallyRead < blockSize) {
+                    Arrays.fill(blockBytes, actuallyRead, blockSize, (byte) 0);
                 }
 
-                // parse block via Block.fromBytes
-                Block<PersonBinary> block = new Block<>(BLOCKING_FACTOR, (IData<PersonBinary>) () -> new PersonBinary());
+                Block<PersonBinary> block = new Block<>(blockingFactor, (IData<PersonBinary>) () -> new PersonBinary());
                 try {
                     block.fromBytes(blockBytes);
                 } catch (Exception ex) {
@@ -166,31 +179,29 @@ public class HeapDumpDialog extends JDialog {
 
                 int validCount = block.getValidCount();
                 boolean corrupted = false;
-                if (validCount < 0 || validCount > BLOCKING_FACTOR) {
+                if (validCount < 0 || validCount > blockingFactor) {
                     corrupted = true;
-                    validCount = Math.max(0, Math.min(BLOCKING_FACTOR, validCount));
+                    validCount = Math.max(0, Math.min(blockingFactor, validCount));
                 }
 
                 sb.append(" -> validCount=").append(validCount)
-                        .append(" / capacity=").append(BLOCKING_FACTOR)
+                        .append(" / capacity=").append(blockingFactor)
                         .append("  [meta-partial=").append(partialSet.contains(b))
                         .append(", meta-empty=").append(emptySet.contains(b))
                         .append("]");
                 if (corrupted) sb.append("  (CORRUPTED: clamped)");
                 sb.append("\n");
 
-                // show header bytes
-                sb.append("  Header raw (4 bytes): ").append(bytesToHex(blockBytes, 0, 4)).append("\n");
+                sb.append("  Header raw (4 bytes): ").append(bytesToBinary(blockBytes, 0, 4)).append("\n");
 
                 PersonBinary[] recs = block.getData();
-                for (int r = 0; r < BLOCKING_FACTOR; r++) {
+                for (int r = 0; r < blockingFactor; r++) {
                     PersonBinary p = recs[r];
                     String status = r < validCount ? "VALID" : "EMPTY";
                     String id = "<empty-id>";
                     String summary = "<no-summary>";
                     try {
-                        if (p != null) {
-                            // try to decode a fresh PersonBinary from raw bytes slice for reliable fields
+                        if (r < validCount && p != null) {
                             int recOffset = 4 + r * RECORD_SIZE;
                             int recLen = Math.max(0, Math.min(RECORD_SIZE, blockBytes.length - recOffset));
                             byte[] recBytes = new byte[recLen];
@@ -202,17 +213,15 @@ public class HeapDumpDialog extends JDialog {
                             summary = tmp.toString() != null ? tmp.toString() : "<present>";
                         }
                     } catch (Exception ex) {
-                        // ignore individual decode errors
                     }
 
                     sb.append(String.format("  [%d] %s - id=%s\n", r, status, id));
                     sb.append("      summary: ").append(summary).append("\n");
 
-                    // raw bytes slice for this record (first 32 bytes)
                     int recOffset = 4 + r * RECORD_SIZE;
                     int recLen = Math.max(0, Math.min(RECORD_SIZE, blockBytes.length - recOffset));
                     if (recLen > 0) {
-                        sb.append("      raw: ").append(bytesToHex(blockBytes, recOffset, Math.min(32, recLen))).append("\n");
+                        sb.append("      raw: ").append(bytesToBinary(blockBytes, recOffset, Math.min(32, recLen))).append("\n");
                     } else {
                         sb.append("      raw: <empty>\n");
                     }
@@ -225,10 +234,10 @@ public class HeapDumpDialog extends JDialog {
         return sb.toString();
     }
 
-    private static String bytesToHex(byte[] bytes, int off, int len) {
+    private static String bytesToBinary(byte[] bytes, int off, int len) {
         StringBuilder sb = new StringBuilder();
         for (int i = off; i < off + len && i < bytes.length; i++) {
-            sb.append(String.format("%02X", bytes[i]));
+            sb.append(String.format("%8s", Integer.toBinaryString(bytes[i] & 0xFF)).replace(' ', '0'));
             if (i < off + len - 1) sb.append(" ");
         }
         return sb.toString();

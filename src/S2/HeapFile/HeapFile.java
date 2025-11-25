@@ -134,8 +134,6 @@ public class HeapFile<T extends IRecord> {
         this.file.setLength((long) this.totalBlocks * this.blockSize);
     }
 
-
-
     public void seek(int address) throws IOException {
         this.file.seek((long) address * this.blockSize);
     }
@@ -143,27 +141,6 @@ public class HeapFile<T extends IRecord> {
     public void close() throws IOException {
         saveMetadata();
         file.close();
-    }
-
-    public void print() throws IOException {
-        System.out.println("=== Heap File Contents ===");
-        System.out.println("Total blocks: " + this.totalBlocks);
-        System.out.println("Blocking factor: " + this.blockingFactor);
-        System.out.println("Partially free blocks: " + this.partiallyFreeBlocks);
-        System.out.println("Fully empty blocks: " + this.fullyEmptyBlocks);
-        System.out.println();
-
-        for (int i = 0; i < this.totalBlocks; i++) {
-            Block<T> block = readBlock(i);
-            System.out.println("Block " + i + " (Valid: " + block.getValidCount() + "/" + this.blockingFactor + "):");
-
-            T[] records = block.getData();
-            for (int j = 0; j < this.blockingFactor; j++) {
-                String status = j < block.getValidCount() ? "VALID" : "INVALID";
-                System.out.println("  [" + j + "] " + status + ": " + records[j]);
-            }
-            System.out.println();
-        }
     }
 
     private Block<T> readBlock(int address) throws IOException {

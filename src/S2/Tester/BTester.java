@@ -7,10 +7,13 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 
 public class BTester {
     private final int OPERATIONS = 10_000;
+    private final int INSERT = 40;
+    private final int DELETE = 70;
     public BTester() {
     }
 
@@ -33,17 +36,15 @@ public class BTester {
                         metaFile.getAbsolutePath()
                 );
 
-                java.util.HashMap<String, Integer> addressMap = new java.util.HashMap<>();
+                HashMap<String, Integer> addressMap = new HashMap<>();
                 ArrayList<PersonBinary> allPersons = new ArrayList<>();
 
                 Random rng = new Random(j);
 
                 for (int i = 0; i < OPERATIONS; i++) {
                     int operation = rng.nextInt(100);
-
-                    if (operation < 40) {
+                    if (operation < INSERT) {
                         PersonBinary person = generateRandomPerson(rng);
-
                         if (!addressMap.containsKey(person.getId())) {
                             int address = hf.insert(person);
                             if (address != -1) {
@@ -51,8 +52,7 @@ public class BTester {
                                 allPersons.add(person);
                             }
                         }
-
-                    } else if (operation < 70) {
+                    } else if (operation < DELETE) {
                         if (!allPersons.isEmpty()) {
                             int index = rng.nextInt(allPersons.size());
                             PersonBinary expected = allPersons.get(index);
@@ -60,16 +60,9 @@ public class BTester {
 
                             PersonBinary result = hf.get(address, expected);
                             if (result == null || !result.equals(expected)) {
-                                System.err.println("Expected ID: [" + expected.getId() + "]");
-                                if (result != null) {
-                                    System.err.println("Actual ID:   [" + result.getId() + "]");
-                                } else {
-                                    System.err.println("Result was null!");
-                                }
                                 throw new AssertionError("Get failed at iteration " + i);
                             }
                         }
-
                     } else {
                         if (!allPersons.isEmpty()) {
                             int index = rng.nextInt(allPersons.size());
@@ -99,6 +92,7 @@ public class BTester {
                         }
                     }
                 }
+                hf.insert(new PersonBinary("ýýýýýýýýýýýýýýý", "žžžžžžžžžžžžžž", new Date(), "ľľľľľľľľľľ"));
 
                 hf.close();
             }
@@ -172,7 +166,7 @@ public class BTester {
             PersonBinary newPerson = generateRandomPerson(rng);
             int newAddress = hf.insert(newPerson);
 
-            int expectedLeftmost = Math.min(Math.min(addr1, addr2), addr3); // should be 1 for our picks
+            int expectedLeftmost = Math.min(Math.min(addr1, addr2), addr3);
             if (newAddress != expectedLeftmost) {
                 throw new AssertionError(
                         "Expected new record in block " + expectedLeftmost + " (leftmost partially free), but was in block " + newAddress

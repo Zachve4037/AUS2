@@ -1,6 +1,5 @@
 package S2.DB;
 
-import S2.DB.HeapDumpDialog;
 import S2.Tester.BTester;
 
 import javax.swing.*;
@@ -22,7 +21,6 @@ public class DBViewer extends JFrame {
         setSize(900, 700);
         setLocationRelativeTo(null);
 
-        // Top button bar replaces the previous menu
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         runTestButton = new JButton("Run Test");
         loadHeapButton = new JButton("Load HeapFile...");
@@ -41,9 +39,10 @@ public class DBViewer extends JFrame {
         add(statusLabel, BorderLayout.SOUTH);
 
         JTextArea hint = new JTextArea(
-                "Use Run Test to generate test heap files.\n" +
-                        "Then use Load HeapFile to pick data/meta files and Open Viewer to inspect.\n" +
-                        "Viewer will display blocks and each record's fields and raw bytes."
+                """
+                        Use Run Test to generate test heap files.
+                        Then use Load HeapFile to pick data/meta files and Open Viewer to inspect.
+                        Viewer will display blocks and each record's fields and raw bytes."""
         );
         hint.setEditable(false);
         add(new JScrollPane(hint), BorderLayout.CENTER);
