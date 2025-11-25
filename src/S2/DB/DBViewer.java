@@ -90,11 +90,4 @@ public class DBViewer extends JFrame {
         HeapDumpDialog dialog = new HeapDumpDialog(this, dataFile, metaFile);
         dialog.setVisible(true);
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            DBViewer frame = new DBViewer();
-            frame.setVisible(true);
-        });
-    }
 }
