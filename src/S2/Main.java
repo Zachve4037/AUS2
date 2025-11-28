@@ -6,14 +6,14 @@ import S2.Tester.BTester;
 import javax.swing.*;
 
 public class Main {
-    static void main() {
-        BTester tester = new BTester();
-        tester.testHeapFile();
+    static void main(String[] args) {
+//        BTester tester = new BTester();
+//        tester.testHeapFile();
 //        tester.testLeftmostInsertion();
 //        tester.testLastBlockEmpty();
-//        SwingUtilities.invokeLater(() -> {
-//            DBViewer frame = new DBViewer();
-//            frame.setVisible(true);
-//        });
+        SwingUtilities.invokeLater(() -> {
+            DBViewer frame = new DBViewer();
+            frame.setVisible(true);
+        });
     }
 }

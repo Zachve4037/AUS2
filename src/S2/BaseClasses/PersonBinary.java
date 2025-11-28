@@ -5,6 +5,7 @@ import S2.HeapFile.IRecord;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class PersonBinary implements IRecord {
     private String name;
@@ -31,7 +32,7 @@ public class PersonBinary implements IRecord {
         if (this == other) return true;
         if (other == null) return false;
         if (!(other instanceof PersonBinary p)) return false;
-        return id != null ? id.equals(p.id) : p.id == null;
+        return Objects.equals(id, p.id);
     }
 
     @Override
@@ -41,7 +42,7 @@ public class PersonBinary implements IRecord {
 
     @Override
     public byte[] getBytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(176);
+        ByteBuffer buffer = ByteBuffer.allocate(this.getSize());
 
         writeString(buffer, name != null ? name : "", 15);
         writeString(buffer, surname != null ? surname : "", 14);
