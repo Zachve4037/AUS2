@@ -7,13 +7,13 @@ import javax.swing.*;
 
 public class Main {
     static void main() {
-//        BTester tester = new BTester();
-//        tester.testHeapFile();
+        BTester tester = new BTester();
+        tester.testHeapFile();
 //        tester.testLeftmostInsertion();
 //        tester.testLastBlockEmpty();
-        SwingUtilities.invokeLater(() -> {
-            DBViewer frame = new DBViewer();
-            frame.setVisible(true);
-        });
+//        SwingUtilities.invokeLater(() -> {
+//            DBViewer frame = new DBViewer();
+//            frame.setVisible(true);
+//        });
     }
 }

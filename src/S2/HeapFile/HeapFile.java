@@ -6,6 +6,7 @@ import java.io.*;
 
 public class HeapFile<T extends IRecord> {
     private final RandomAccessFile file;
+    private final RandomAccessFile metadata;
     private final IData<T> type;
     private final int blockSize;
     private final int blockingFactor;
@@ -29,7 +30,11 @@ public class HeapFile<T extends IRecord> {
         }
         this.totalBlocks = 0;
 
-        this.loadMetadata();
+        File metaFile = new File(metadataPath);
+        if (!metaFile.exists()) {
+            metaFile.createNewFile();
+        }
+        this.metadata = new RandomAccessFile(metadataPath, "rw");
     }
 
     public int insert(T record) throws IOException {
@@ -140,7 +145,8 @@ public class HeapFile<T extends IRecord> {
 
     public void close() throws IOException {
         saveMetadata();
-        file.close();
+        this.metadata.close();
+        this.file.close();
     }
 
     private Block<T> readBlock(int address) throws IOException {
@@ -187,54 +193,40 @@ public class HeapFile<T extends IRecord> {
             }
 
             dos.flush();
-
             byte[] metadataBytes = baos.toByteArray();
 
-            try (RandomAccessFile metaFile = new RandomAccessFile(this.metadadaPath, "rw")) {
-                int offset = 0;
-                while (offset < metadataBytes.length) {
-                    int toWrite = Math.min(this.blockSize, metadataBytes.length - offset);
-                    metaFile.write(metadataBytes, offset, toWrite);
-                    offset += toWrite;
-                }
-                metaFile.setLength(offset);
-            }
+            this.metadata.seek(0);
+            this.metadata.write(metadataBytes);
+            this.metadata.setLength(metadataBytes.length);
+
         }
     }
 
     private void loadMetadata() throws IOException {
-        File metaFile = new File(this.metadadaPath);
-        if (!metaFile.exists()) {
+        if (this.metadata.length() == 0) {
             this.totalBlocks = 0;
             return;
         }
+        this.metadata.seek(0);
 
-        try (RandomAccessFile metaRAF = new RandomAccessFile(this.metadadaPath, "r");
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+        byte[] metadataBytes = new byte[(int) this.metadata.length()];
+        this.metadata.readFully(metadataBytes);
 
-            byte[] blockBuffer = new byte[this.blockSize];
-            int bytesRead;
-            while ((bytesRead = metaRAF.read(blockBuffer)) != -1) {
-                baos.write(blockBuffer, 0, bytesRead);
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(metadataBytes);
+             DataInputStream dis = new DataInputStream(bais)) {
+
+            this.totalBlocks = dis.readInt();
+
+            int partialCount = dis.readInt();
+            for (int i = 0; i < partialCount; i++) {
+                this.partiallyFreeBlocks.insert(dis.readInt());
             }
 
-            byte[] metadataBytes = baos.toByteArray();
-
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(metadataBytes);
-                 DataInputStream dis = new DataInputStream(bais)) {
-
-                this.totalBlocks = dis.readInt();
-
-                int partialCount = dis.readInt();
-                for (int i = 0; i < partialCount; i++) {
-                    this.partiallyFreeBlocks.insert(dis.readInt());
-                }
-
-                int emptyCount = dis.readInt();
-                for (int i = 0; i < emptyCount; i++) {
-                    this.fullyEmptyBlocks.insert(dis.readInt());
-                }
+            int emptyCount = dis.readInt();
+            for (int i = 0; i < emptyCount; i++) {
+                this.fullyEmptyBlocks.insert(dis.readInt());
             }
+
 
             long actualSize = this.file.length();
             long expectedSize = (long) this.totalBlocks * this.blockSize;

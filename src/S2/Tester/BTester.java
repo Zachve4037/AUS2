@@ -20,7 +20,7 @@ public class BTester {
     public void testHeapFile() {
         System.out.println("testHeapFile");
         try {
-            for (int j = 1; j < 2; j++) {
+            for (int j = 1; j < 200000; j++) {
                 File dataFile = new File("test_heap_" + j + ".dat");
                 File metaFile = new File("test_heap_" + j + ".meta");
                 if (dataFile.exists()) dataFile.delete();
