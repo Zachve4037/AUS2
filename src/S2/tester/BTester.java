@@ -1,7 +1,7 @@
-package S2.Tester;
+package S2.tester;
 
-import S2.BaseClasses.PersonBinary;
-import S2.HeapFile.HeapFile;
+import S2.baseClasses.PersonBinary;
+import S2.heapFile.HeapFile;
 
 import java.io.File;
 import java.io.RandomAccessFile;

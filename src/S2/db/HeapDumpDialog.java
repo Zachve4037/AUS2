@@ -1,8 +1,8 @@
-package S2.DB;
+package S2.db;
 
-import S2.BaseClasses.PersonBinary;
-import S2.HeapFile.Block;
-import S2.HeapFile.IData;
+import S2.baseClasses.PersonBinary;
+import S2.heapFile.Block;
+import S2.heapFile.IData;
 
 import javax.swing.*;
 import java.awt.*;

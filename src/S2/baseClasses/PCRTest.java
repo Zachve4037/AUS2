@@ -1,11 +1,12 @@
-package S2.BaseClasses;
+package S2.baseClasses;
 
-import S2.HeapFile.IRecord;
+import S2.heapFile.IRecord;
+import S2.linearHashing.IHash;
 
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
 
-public class PCRTest implements IRecord {
+public class PCRTest implements IRecord, IHash {
     private LocalDateTime timeOfTest;
     private String patientId;
     private PersonBinary patient;
@@ -131,5 +132,10 @@ public class PCRTest implements IRecord {
         buffer.position(buffer.position() + remainingPadding);
 
         return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public long getHashCode() {
+        return 0;
     }
 }

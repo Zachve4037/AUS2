@@ -1,4 +1,4 @@
-package S2.HeapFile;
+package S2.heapFile;
 
 public interface IRecord {
     boolean equals(IRecord other);

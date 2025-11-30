@@ -1,6 +1,6 @@
-package S2.DB;
+package S2.db;
 
-import S2.Tester.BTester;
+import S2.tester.BTester;
 
 import javax.swing.*;
 import java.awt.*;

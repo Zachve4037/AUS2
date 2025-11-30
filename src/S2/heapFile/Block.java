@@ -1,4 +1,4 @@
-package S2.HeapFile;
+package S2.heapFile;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;

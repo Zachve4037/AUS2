@@ -1,4 +1,4 @@
-package S2.HeapFile;
+package S2.heapFile;
 
 import S1.trees.avl.AVLTree;
 
@@ -66,6 +66,23 @@ public class HeapFile<T extends IRecord> {
 
         writeBlock(address, block);
         return address;
+    }
+
+    public boolean insertEmptyBlockAt(int address) throws IOException {
+        if (address < 0 || address > this.totalBlocks) {
+            return false;
+        }
+
+        Block<T> block = new Block<>(this.blockingFactor, this.type);
+        writeBlock(address, block);
+
+        this.fullyEmptyBlocks.insert(address);
+
+        if (address == this.totalBlocks) {
+            this.totalBlocks++;
+        }
+
+        return true;
     }
 
 
@@ -149,7 +166,7 @@ public class HeapFile<T extends IRecord> {
         this.file.close();
     }
 
-    private Block<T> readBlock(int address) throws IOException {
+    public Block<T> readBlock(int address) throws IOException {
         long blockPosition = (long) address * this.blockSize;
 
         if (blockPosition >= this.file.length()) {
@@ -165,7 +182,7 @@ public class HeapFile<T extends IRecord> {
         return block;
     }
 
-    private void writeBlock(int blockAddress, Block<T> block) throws IOException {
+    public void writeBlock(int blockAddress, Block<T> block) throws IOException {
         seek(blockAddress);
         byte[] blockData = block.getBytes();
 

@@ -1,13 +1,14 @@
-package S2.BaseClasses;
+package S2.baseClasses;
 
-import S2.HeapFile.IRecord;
+import S2.heapFile.IRecord;
+import S2.linearHashing.IHash;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
-public class PersonBinary implements IRecord {
+public class PersonBinary implements IRecord, IHash {
     private String name;
     private String surname;
     private Date birthDate;
@@ -117,5 +118,10 @@ public class PersonBinary implements IRecord {
 
     public String getId() {
         return this.id;
+    }
+
+    @Override
+    public long getHashCode() {
+        return 0;
     }
 }

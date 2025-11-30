@@ -1,7 +1,6 @@
 package S2;
 
-import S2.DB.DBViewer;
-import S2.Tester.BTester;
+import S2.db.DBViewer;
 
 import javax.swing.*;
 
