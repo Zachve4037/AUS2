@@ -1,15 +1,10 @@
 package S1.tester;
 
-import S2.HeapFile.HeapFile;
-import S2.HeapFile.IData;
-import S2.HeapFile.IRecord;
+
 import S1.trees.BSTree;
 import S1.trees.BSTNode;
 import S1.trees.avl.AVLNode;
 import S1.trees.avl.AVLTree;
-
-import java.io.File;
-import java.io.RandomAccessFile;
 import java.util.*;
 
 public class Tester {

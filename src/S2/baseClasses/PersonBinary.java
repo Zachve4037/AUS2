@@ -122,6 +122,13 @@ public class PersonBinary implements IRecord, IHash {
 
     @Override
     public long getHashCode() {
-        return 0;
+        if (this.id == null || this.id.isEmpty()) {
+            return 0;
+        }
+        long hash = 0;
+        for (int i = 0; i < this.id.length(); i++) {
+            hash = 31 * hash + this.id.charAt(i);
+        }
+        return Math.abs(hash);
     }
 }

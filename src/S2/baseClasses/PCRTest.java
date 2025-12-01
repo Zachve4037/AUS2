@@ -136,6 +136,6 @@ public class PCRTest implements IRecord, IHash {
 
     @Override
     public long getHashCode() {
-        return 0;
+        return Math.abs((long) this.testId);
     }
 }

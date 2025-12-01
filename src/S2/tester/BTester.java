@@ -1,7 +1,11 @@
 package S2.tester;
 
 import S2.baseClasses.PersonBinary;
+import S2.baseClasses.TestIntegerRecord;
 import S2.heapFile.HeapFile;
+import S2.linearHashing.ISplitPolicy;
+import S2.linearHashing.LinearHashing;
+import S2.linearHashing.SplitPolicyImpl;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -270,5 +274,170 @@ public class BTester {
         }
 
         return sb.toString();
+    }
+
+    public void testLinearHashing() {
+        System.out.println("testLinearHashing");
+        try {
+            for (int seed = 1; seed <= 3; seed++) {
+                File mainFile = new File("test_lh_main_" + seed + ".dat");
+                File mainMeta = new File("test_lh_main_" + seed + ".meta");
+                File overflowFile = new File("test_lh_overflow_" + seed + ".dat");
+                File overflowMeta = new File("test_lh_overflow_" + seed + ".meta");
+
+                if (mainFile.exists()) mainFile.delete();
+                if (mainMeta.exists()) mainMeta.delete();
+                if (overflowFile.exists()) overflowFile.delete();
+                if (overflowMeta.exists()) overflowMeta.delete();
+
+                RandomAccessFile mainRaf = new RandomAccessFile(mainFile, "rw");
+                RandomAccessFile overflowRaf = new RandomAccessFile(overflowFile, "rw");
+
+                int blockCapacity = 3;
+                int blockSize = 100;
+
+                HeapFile<TestIntegerRecord> mainHeap = new HeapFile<>(
+                        mainRaf,
+                        () -> new TestIntegerRecord(),
+                        4,
+                        blockSize,
+                        mainMeta.getAbsolutePath(),
+                        true
+                );
+
+                HeapFile<TestIntegerRecord> overflowHeap = new HeapFile<>(
+                        overflowRaf,
+                        () -> new TestIntegerRecord(),
+                        4,
+                        blockSize,
+                        overflowMeta.getAbsolutePath(),
+                        false
+                );
+
+                ISplitPolicy policy = new SplitPolicyImpl(0.75, 0.3);
+                LinearHashing<TestIntegerRecord> lh = new LinearHashing<>(
+                        mainHeap,
+                        overflowHeap,
+                        policy,
+                        4,
+                        blockCapacity
+                );
+
+                HashMap<Integer, TestIntegerRecord> insertedMap = new HashMap<>();
+                Random rng = new Random(seed);
+
+                for (int i = 0; i < OPERATIONS; i++) {
+                    int operation = rng.nextInt(100);
+
+                    if (operation < 70) {
+                        int value = rng.nextInt(1000000);
+                        TestIntegerRecord record = new TestIntegerRecord(value);
+
+                        if (!insertedMap.containsKey(value)) {
+                            lh.insert(record);
+                            insertedMap.put(value, record);
+
+                            TestIntegerRecord immediateVerify = lh.get(record);
+                            if (immediateVerify == null) {
+                                throw new AssertionError(
+                                        "Iteration " + i + ": Inserted record " + value +
+                                                " but immediate get returned null"
+                                );
+                            }
+                            if (!immediateVerify.equals(record)) {
+                                throw new AssertionError(
+                                        "Iteration " + i + ": Inserted " + value +
+                                                " but got back different value: " + immediateVerify
+                                );
+                            }
+                        }
+                    } else {
+                        if (!insertedMap.isEmpty()) {
+                            Integer[] keys = insertedMap.keySet().toArray(new Integer[0]);
+                            int randomKey = keys[rng.nextInt(keys.length)];
+                            TestIntegerRecord expected = insertedMap.get(randomKey);
+
+                            TestIntegerRecord result = lh.get(expected);
+
+                            if (result == null) {
+                                throw new AssertionError(
+                                        "Iteration " + i + ": Get returned null for existing record " +
+                                                expected + " (value=" + randomKey + ")"
+                                );
+                            }
+
+                            if (!result.equals(expected)) {
+                                throw new AssertionError(
+                                        "Iteration " + i + ": Expected " + expected +
+                                                " but got " + result
+                                );
+                            }
+                        }
+                    }
+
+                    if (i % 500 == 0 && !insertedMap.isEmpty()) {
+                        int checksPerRound = Math.min(100, insertedMap.size());
+                        Integer[] allKeys = insertedMap.keySet().toArray(new Integer[0]);
+
+                        for (int j = 0; j < checksPerRound; j++) {
+                            int randomKey = allKeys[rng.nextInt(allKeys.length)];
+                            TestIntegerRecord toVerify = insertedMap.get(randomKey);
+                            TestIntegerRecord retrieved = lh.get(toVerify);
+
+                            if (retrieved == null) {
+                                throw new AssertionError(
+                                        "Validation at iteration " + i + ": Record " +
+                                                randomKey + " exists in map but get returned null"
+                                );
+                            }
+
+                            if (!retrieved.equals(toVerify)) {
+                                throw new AssertionError(
+                                        "Validation at iteration " + i + ": Record mismatch for " +
+                                                randomKey + ". Expected " + toVerify + " but got " + retrieved
+                                );
+                            }
+                        }
+                    }
+
+                    if (i % 1000 == 0 && i > 0) {
+                        System.out.println("  Seed " + seed + ": Iteration " + i +
+                                ", Records: " + insertedMap.size());
+                    }
+                }
+
+                System.out.println("  Seed " + seed + ": Final validation of all " +
+                        insertedMap.size() + " records...");
+
+                for (Integer key : insertedMap.keySet()) {
+                    TestIntegerRecord expected = insertedMap.get(key);
+                    TestIntegerRecord result = lh.get(expected);
+
+                    if (result == null) {
+                        throw new AssertionError(
+                                "Final validation: Record " + key + " missing from hash table"
+                        );
+                    }
+
+                    if (!result.equals(expected)) {
+                        throw new AssertionError(
+                                "Final validation: Record " + key + " corrupted. " +
+                                        "Expected " + expected + " but got " + result
+                        );
+                    }
+                }
+
+                mainHeap.close();
+                overflowHeap.close();
+
+                System.out.println("  Seed " + seed + " PASSED with " +
+                        insertedMap.size() + " records validated");
+            }
+
+            System.out.println("testLinearHashing completed successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Linear Hashing test failed", e);
+        }
     }
 }

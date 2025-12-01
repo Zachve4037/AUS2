@@ -1,10 +1,13 @@
 package S2.heapFile;
 
 import S1.trees.avl.AVLTree;
+import S2.linearHashing.IHash;
+import S2.linearHashing.MainBlock;
 
+import javax.management.PersistentMBean;
 import java.io.*;
 
-public class HeapFile<T extends IRecord> {
+public class HeapFile<T extends IRecord & IHash> {
     private final RandomAccessFile file;
     private final RandomAccessFile metadata;
     private final IData<T> type;
@@ -13,17 +16,21 @@ public class HeapFile<T extends IRecord> {
     private final String metadadaPath;
     private final AVLTree<Integer> partiallyFreeBlocks;
     private final AVLTree<Integer> fullyEmptyBlocks;
+    private final boolean useMainHeader;
     private int totalBlocks;
 
-    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize, String metadataPath) throws IOException {
+    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize,
+                    String metadataPath, boolean useMainHeader) throws IOException {
         this.file = file;
         this.type = type;
         this.blockSize = blockSize;
         this.metadadaPath = metadataPath;
+        this.useMainHeader = useMainHeader;
         this.partiallyFreeBlocks = new AVLTree<>();
         this.fullyEmptyBlocks = new AVLTree<>();
 
-        this.blockingFactor = (blockSize - 4) / recordSize;
+        int headerSize = useMainHeader ? 12 : 4;
+        this.blockingFactor = (blockSize - headerSize) / recordSize;
 
         if (blockingFactor <= 0) {
             throw new IllegalArgumentException("Block size is too small to hold any record!");
@@ -35,6 +42,13 @@ public class HeapFile<T extends IRecord> {
             metaFile.createNewFile();
         }
         this.metadata = new RandomAccessFile(metadataPath, "rw");
+        this.loadMetadata();
+    }
+
+    //kvoli spatnej kompatibilite
+    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize,
+                    String metadataPath) throws IOException {
+        this(file, type, recordSize, blockSize, metadataPath, false);
     }
 
     public int insert(T record) throws IOException {
@@ -102,6 +116,14 @@ public class HeapFile<T extends IRecord> {
         return null;
     }
 
+    public int getTotalBlockCount() {
+        return this.totalBlocks;
+    }
+
+    public IData<T> getType() {
+        return this.type;
+    }
+
 
     public void delete(int address, T data) throws IOException {
         if (address < 0 || address >= totalBlocks) {
@@ -143,7 +165,7 @@ public class HeapFile<T extends IRecord> {
         }
     }
 
-    private void cutEmptyFileBlocks() throws IOException {
+    public void cutEmptyFileBlocks() throws IOException {
         while (this.totalBlocks > 0) {
             Integer maxEmpty = this.fullyEmptyBlocks.findMax(this.fullyEmptyBlocks.getRoot());
             if (maxEmpty != null && maxEmpty == this.totalBlocks - 1) {
@@ -170,14 +192,19 @@ public class HeapFile<T extends IRecord> {
         long blockPosition = (long) address * this.blockSize;
 
         if (blockPosition >= this.file.length()) {
-            return new Block<>(this.blockingFactor, this.type);
+            Block<T> emptyBlock = useMainHeader
+                    ? new MainBlock<>(this.blockingFactor, this.type)
+                    : new Block<>(this.blockingFactor, this.type);
+            return emptyBlock;
         }
 
         seek(address);
         byte[] bytes = new byte[this.blockSize];
         this.file.readFully(bytes);
 
-        Block<T> block = new Block<>(this.blockingFactor, this.type);
+        Block<T> block = useMainHeader
+                ? new MainBlock<>(this.blockingFactor, this.type)
+                : new Block<>(this.blockingFactor, this.type);
         block.fromBytes(bytes);
         return block;
     }
