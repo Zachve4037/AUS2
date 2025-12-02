@@ -7,11 +7,13 @@ public class Block<T extends IRecord> {
     private int validCount;
     private final int capacity;
     private T[] data;
+    private final IData<T> type;
 
     public Block(int capacity, IData<T> type) {
+        this.type = type;
         this.validCount = 0;
         this.capacity = capacity;
-        T temp = type.createClass();
+        T temp = this.type.createClass();
         this.data = (T[]) Array.newInstance(temp.getClass(), capacity);
 
         for (int i = 0; i < capacity; i++) {
@@ -33,6 +35,10 @@ public class Block<T extends IRecord> {
 
     public boolean isFull() {
         return this.validCount >= this.capacity;
+    }
+
+    public IData<T> getType() {
+        return this.type;
     }
 
     public boolean isEmpty() {

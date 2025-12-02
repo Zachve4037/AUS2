@@ -440,4 +440,170 @@ public class BTester {
             throw new RuntimeException("Linear Hashing test failed", e);
         }
     }
+
+    public void testLinearHashingManual() {
+        System.out.println("testLinearHashingManual");
+        try {
+            File mainFile = new File("test_lh_manual_main.dat");
+            File mainMeta = new File("test_lh_manual_main.meta");
+            File overflowFile = new File("test_lh_manual_overflow.dat");
+            File overflowMeta = new File("test_lh_manual_overflow.meta");
+
+            if (mainFile.exists()) mainFile.delete();
+            if (mainMeta.exists()) mainMeta.delete();
+            if (overflowFile.exists()) overflowFile.delete();
+            if (overflowMeta.exists()) overflowMeta.delete();
+
+            RandomAccessFile mainRaf = new RandomAccessFile(mainFile, "rw");
+            RandomAccessFile overflowRaf = new RandomAccessFile(overflowFile, "rw");
+
+            int blockCapacity = 2;
+            int recordSize = 4;
+            int blockSize = 16 + (recordSize * blockCapacity);
+            int M = 2;
+            int S = 0;
+
+            HeapFile<TestIntegerRecord> mainHeap = new HeapFile<>(
+                    mainRaf,
+                    () -> new TestIntegerRecord(),
+                    recordSize,
+                    blockSize,
+                    mainMeta.getAbsolutePath(),
+                    true
+            );
+
+            HeapFile<TestIntegerRecord> overflowHeap = new HeapFile<>(
+                    overflowRaf,
+                    () -> new TestIntegerRecord(),
+                    recordSize,
+                    blockSize,
+                    overflowMeta.getAbsolutePath(),
+                    false
+            );
+
+            ISplitPolicy policy = new SplitPolicyImpl(0.75, 0.3);
+            LinearHashing<TestIntegerRecord> lh = new LinearHashing<>(
+                    mainHeap,
+                    overflowHeap,
+                    policy,
+                    M,
+                    blockCapacity
+            );
+
+            int[] values = {27, 18, 29, 28, 39, 13, 16, 51, 19};
+            ArrayList<TestIntegerRecord> records = new ArrayList<>();
+
+            for (int value : values) {
+                TestIntegerRecord record = new TestIntegerRecord(value);
+                records.add(record);
+
+                System.out.println("\n========================================");
+                System.out.println("Inserting: " + value);
+                System.out.println("========================================");
+
+                lh.insert(record);
+
+                int expectedBuckets = M + S;
+                printHashTableState(mainHeap, overflowHeap, Math.max(M, expectedBuckets));
+
+                TestIntegerRecord verify = lh.get(record);
+                if (verify == null) {
+                    throw new AssertionError("Failed to retrieve record " + value + " immediately after insert");
+                }
+                if (!verify.equals(record)) {
+                    throw new AssertionError("Record mismatch for " + value);
+                }
+            }
+
+            System.out.println("\n========================================");
+            System.out.println("FINAL VERIFICATION");
+            System.out.println("========================================");
+
+            for (int i = 0; i < values.length; i++) {
+                TestIntegerRecord expected = records.get(i);
+                TestIntegerRecord result = lh.get(expected);
+
+                if (result == null) {
+                    throw new AssertionError("Record " + values[i] + " not found in final verification");
+                }
+
+                if (!result.equals(expected)) {
+                    throw new AssertionError(
+                            "Record mismatch for " + values[i] +
+                                    ". Expected " + expected + " but got " + result
+                    );
+                }
+
+                System.out.println(values[i] + " found and verified");
+            }
+
+            mainHeap.close();
+            overflowHeap.close();
+
+            System.out.println("\ntestLinearHashingManual completed successfully!");
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Manual Linear Hashing test failed", e);
+        }
+    }
+
+    private void printHashTableState(HeapFile<TestIntegerRecord> mainHeap, HeapFile<TestIntegerRecord> overflowHeap, int expectedMainBlocks) throws Exception {
+        System.out.println("\nHash Table State:");
+        System.out.println("Expected main blocks: " + expectedMainBlocks);
+
+        for (int i = 0; i < expectedMainBlocks; i++) {
+            try {
+                S2.heapFile.Block<TestIntegerRecord> block = mainHeap.readBlock(i);
+
+                if (block instanceof S2.linearHashing.MainBlock) {
+                    S2.linearHashing.MainBlock<TestIntegerRecord> mainBlock = (S2.linearHashing.MainBlock<TestIntegerRecord>) block;
+
+                    System.out.print("Block " + i + ": [");
+                    for (int j = 0; j < mainBlock.getValidCount(); j++) {
+                        if (j > 0) System.out.print(", ");
+                        System.out.print(((TestIntegerRecord)mainBlock.getData()[j]).toString());
+                    }
+                    System.out.print("] (records: " + mainBlock.getRecordCount() +
+                            ", chainLength: " + mainBlock.getChainLength() + ")");
+
+                    if (mainBlock.getChainLength() > 0) {
+                        System.out.print(" → Overflow: ");
+                        printOverflowChain(overflowHeap, 0);
+                    }
+                    System.out.println();
+                }
+            } catch (Exception e) {
+                System.out.println("Block " + i + ": Could not read - " + e.getMessage());
+            }
+        }
+    }
+
+
+    private void printOverflowChain(HeapFile<TestIntegerRecord> overflowHeap, int startAddr) throws Exception {
+        int addr = startAddr;
+        boolean first = true;
+
+        while (addr != -1) {
+            if (!first) System.out.print(" → ");
+            first = false;
+
+            S2.heapFile.Block<TestIntegerRecord> block = overflowHeap.readBlock(addr);
+
+            if (block instanceof S2.linearHashing.LHBlock) {
+                S2.linearHashing.LHBlock<TestIntegerRecord> lhBlock = (S2.linearHashing.LHBlock<TestIntegerRecord>) block;
+
+                System.out.print("[");
+                for (int i = 0; i < lhBlock.getValidCount(); i++) {
+                    if (i > 0) System.out.print(", ");
+                    System.out.print(((TestIntegerRecord)lhBlock.getData()[i]).toString());
+                }
+                System.out.print("]");
+
+                addr = lhBlock.getNextBlock();
+            } else {
+                break;
+            }
+        }
+    }
+
 }
