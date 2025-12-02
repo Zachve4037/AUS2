@@ -2,9 +2,8 @@ package S2.heapFile;
 
 import S1.trees.avl.AVLTree;
 import S2.linearHashing.IHash;
-import S2.linearHashing.MainBlock;
+import S2.linearHashing.LHBlock;
 
-import javax.management.PersistentMBean;
 import java.io.*;
 
 public class HeapFile<T extends IRecord & IHash> {
@@ -193,7 +192,7 @@ public class HeapFile<T extends IRecord & IHash> {
 
         if (blockPosition >= this.file.length()) {
             Block<T> emptyBlock = useMainHeader
-                    ? new MainBlock<>(this.blockingFactor, this.type)
+                    ? new LHBlock<>(this.blockingFactor, this.type)
                     : new Block<>(this.blockingFactor, this.type);
             return emptyBlock;
         }
@@ -203,7 +202,7 @@ public class HeapFile<T extends IRecord & IHash> {
         this.file.readFully(bytes);
 
         Block<T> block = useMainHeader
-                ? new MainBlock<>(this.blockingFactor, this.type)
+                ? new LHBlock<>(this.blockingFactor, this.type)
                 : new Block<>(this.blockingFactor, this.type);
         block.fromBytes(bytes);
         return block;

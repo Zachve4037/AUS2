@@ -77,4 +77,7 @@ public class Block<T extends IRecord> {
         }
     }
 
+    protected int getCapacity() {
+        return this.capacity;
+    }
 }
