@@ -18,7 +18,7 @@ public class LinearHashing<T extends IRecord & IHash> {
 
     private static final double MAX_DENSITY = 0.75;
 
-    public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, ISplitPolicy splitPolicy, int initialBucketCount, int blockCapacity) {
+    public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, ISplitPolicy splitPolicy, int initialBucketCount, int blockCapacity) throws IOException {
         this.mainFile = mainFile;
         this.overflowFile = overflowFile;
         this.splitPolicy = splitPolicy;
@@ -27,7 +27,12 @@ public class LinearHashing<T extends IRecord & IHash> {
         this.u = 0;
         this.S = 0;
         this.recordCount = 0;
-        /// TODO: inicializovat bloky v mainFile
+
+        // Initialize main file with M empty buckets
+        for (int i =0; i < M; i++) {
+            LHBlock<T> block = new LHBlock<>(this.blockCapacity, mainFile.getType());
+            this.mainFile.writeBlock(i, block);
+        }
     }
 
     public void insert(T record) throws IOException {
