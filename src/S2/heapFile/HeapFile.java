@@ -88,7 +88,7 @@ public class HeapFile<T extends IRecord & IHash> {
 
         Block<T> block = new Block<>(this.blockingFactor, this.type);
         writeBlock(address, block);
-
+        //zle
         this.fullyEmptyBlocks.insert(address);
 
         if (address == this.totalBlocks) {
@@ -191,10 +191,9 @@ public class HeapFile<T extends IRecord & IHash> {
         long blockPosition = (long) address * this.blockSize;
 
         if (blockPosition >= this.file.length()) {
-            Block<T> emptyBlock = useMainHeader
+            return useMainHeader
                     ? new LHBlock<>(this.blockingFactor, this.type)
                     : new Block<>(this.blockingFactor, this.type);
-            return emptyBlock;
         }
 
         seek(address);
@@ -282,4 +281,7 @@ public class HeapFile<T extends IRecord & IHash> {
         }
     }
 
+    public int getBlockingFactor() {
+        return this.blockingFactor;
+    }
 }
