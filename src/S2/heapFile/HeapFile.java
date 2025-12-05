@@ -284,4 +284,7 @@ public class HeapFile<T extends IRecord & IHash> {
     public int getBlockingFactor() {
         return this.blockingFactor;
     }
+
+    public LHBlock<T> getBlock(int newBucketAddr) {
+    }
 }

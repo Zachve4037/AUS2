@@ -78,6 +78,8 @@ public class LinearHashing<T extends IRecord & IHash> {
             newOverflowBucket.setNextBlockAddr(-1);
             /// TODO: get the address of new block in overflow file
         }
+
+        /// TODO: split if needed
     }
 
     public T get(T wanted) throws IOException {
@@ -96,7 +98,19 @@ public class LinearHashing<T extends IRecord & IHash> {
     }
 
     private void split() throws IOException {
+        int splitBucketAddr = this.S;
+        List<T> records = collectRecords(splitBucketAddr);
+        int newBucketAddr = (int) (S + (M * Math.pow(2, u)));
+        this.mainFile.insertEmptyBlockAt(newBucketAddr);
+        LHBlock<T> newBlock = this.mainFile.getBlock(newBucketAddr);
 
+
+
+        this.S = this.S + 1;
+        if (this.S >= (M * Math.pow(2, u))) {
+            this.S = 0;
+            this.u = this.u + 1;
+        }
     }
 
     private List<T> collectRecords(int bucketAddr) throws IOException {
