@@ -101,9 +101,8 @@ public class LinearHashing<T extends IRecord & IHash> {
         int splitBucketAddr = this.S;
         List<T> records = collectRecords(splitBucketAddr);
         int newBucketAddr = (int) (S + (M * Math.pow(2, u)));
-        this.mainFile.insertEmptyBlockAt(newBucketAddr);
-        LHBlock<T> newBlock = this.mainFile.getBlock(newBucketAddr);
-
+        LHBlock<T> newBucket = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
+        
 
 
         this.S = this.S + 1;
