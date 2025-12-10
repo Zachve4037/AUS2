@@ -88,7 +88,7 @@ public class HeapFile<T extends IRecord & IHash> {
 
         Block<T> block = new Block<>(this.blockingFactor, this.type);
         writeBlock(address, block);
-        //zle
+        /// TODO: todo fix
         this.fullyEmptyBlocks.insert(address);
 
         if (address == this.totalBlocks) {

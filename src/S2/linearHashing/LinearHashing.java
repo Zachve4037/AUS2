@@ -9,7 +9,6 @@ import java.util.List;
 public class LinearHashing<T extends IRecord & IHash> {
     private HeapFile<T> mainFile;
     private HeapFile<T> overflowFile;
-    private final ISplitPolicy splitPolicy;
     private final int M; // initial count(buckets)
     private int u; // level
     private int S; // split pointer
@@ -18,10 +17,9 @@ public class LinearHashing<T extends IRecord & IHash> {
 
     private static final double MAX_DENSITY = 0.75;
 
-    public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, ISplitPolicy splitPolicy, int initialBucketCount) throws IOException {
+    public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, int initialBucketCount) throws IOException {
         this.mainFile = mainFile;
         this.overflowFile = overflowFile;
-        this.splitPolicy = splitPolicy;
         this.M = initialBucketCount;
         this.u = 0;
         this.S = 0;
