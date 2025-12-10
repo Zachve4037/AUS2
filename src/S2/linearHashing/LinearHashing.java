@@ -14,7 +14,6 @@ public class LinearHashing<T extends IRecord & IHash> {
     private int S; // split pointer
     private long recordCount;
 
-
     private static final double MAX_DENSITY = 0.75;
 
     public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, int initialBucketCount) throws IOException {
@@ -114,6 +113,9 @@ public class LinearHashing<T extends IRecord & IHash> {
         List<T> records = new LinkedList<>();
         for (LHBlock<T> block : oldBlocks) {
             for (int i = 0; i < block.getValidCount(); i++) {
+                if (block == null) {
+                    throw new NullPointerException("Split: block is null");
+                }
                 records.add(block.getData()[i]);
             }
         }
@@ -159,8 +161,9 @@ public class LinearHashing<T extends IRecord & IHash> {
         LHBlock<T> newMainBlock = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
         int recordIndex = 0;
 
-        while(recordIndex < records.size() && !newMainBlock.isFull()) {
-            newMainBlock.getData()[recordIndex] = records.get(recordIndex);
+        //naplnam iba pokym nie je plny, ci aj nejaky dalsi check?
+        while(!newMainBlock.isFull()) {
+            newMainBlock.getData()[newMainBlock.getValidCount()] = records.get(recordIndex);
             newMainBlock.setValidCount(newMainBlock.getValidCount() + 1);
             recordIndex++;
         }
@@ -173,7 +176,8 @@ public class LinearHashing<T extends IRecord & IHash> {
             int overflowAddr = addresses.get(overflowCount);
             LHBlock<T> overflowBlock = new LHBlock<>(this.overflowFile.getBlockingFactor(), this.overflowFile.getType());
 
-            while (recordIndex < this.mainFile.getBlockingFactor()) {
+            //to iste co s mainom
+            while (!overflowBlock.isFull()) {
                 overflowBlock.getData()[overflowBlock.getValidCount()]  = records.get(recordIndex);
                 overflowBlock.setValidCount(overflowBlock.getValidCount() + 1);
                 recordIndex++;
