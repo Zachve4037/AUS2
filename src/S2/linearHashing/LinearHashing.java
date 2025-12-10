@@ -1,6 +1,5 @@
 package S2.linearHashing;
 
-import S2.heapFile.Block;
 import S2.heapFile.HeapFile;
 import S2.heapFile.IRecord;
 import java.io.IOException;
@@ -144,53 +143,52 @@ public class LinearHashing<T extends IRecord & IHash> {
             }
         }
 
-        int usedByOld = fillBucketChain(recordsToOld, oldBucketAddr, overflowAddresses, 0);
-        int usedByNew = fillBucketChain(recordsToNew, newBucketAddr, overflowAddresses, usedByOld);
+        int usedByOld = fillConcatenation(recordsToOld, oldBucketAddr, overflowAddresses, 0);
+        int usedByNew = fillConcatenation(recordsToNew, newBucketAddr, overflowAddresses, usedByOld);
 
         for (int i = usedByOld + usedByNew; i < overflowAddresses.size(); i++) {
             ///TODO: treba uvolnit nepouzite overflow bloky
         }
     }
 
-    private int fillBucketChain(
+    private int fillConcatenation(
             List<T> records,
             int bucketAddr,
-            List<Integer> address,
+            List<Integer> addresses,
             int startIndex
     ) throws IOException {
-        LHBlock<T> mainBlock = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
+        //naplnenie hlavneho bloku
+        LHBlock<T> newMainBlock = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
         int recordIndex = 0;
 
-        // naplnenie bloku v mainFile
-        while (recordIndex < records.size() && recordIndex < this.mainFile.getBlockingFactor()) {
-            mainBlock.getData()[recordIndex] = records.get(recordIndex);
-            mainBlock.setValidCount(mainBlock.getValidCount() + 1);
+        while(recordIndex < records.size() && !newMainBlock.isFull()) {
+            newMainBlock.getData()[recordIndex] = records.get(recordIndex);
+            newMainBlock.setValidCount(newMainBlock.getValidCount() + 1);
+            recordIndex++;
         }
+        // overflow index, aby sme pouzili este dostupne adresy
+        int overflowCount = startIndex;
+        LHBlock<T> previousBlock = newMainBlock;
 
-        // naplnenie overflow blokov
-        int overflowsUsed = 0;
-        LHBlock<T> previousBlock = mainBlock;
-        while (recordIndex < records.size()) {
-            int overflowAddr = address.get(startIndex + overflowsUsed);
+        //naplnenie overflow blokov
+        while (recordIndex < records.size()){
+            int overflowAddr = addresses.get(overflowCount);
             LHBlock<T> overflowBlock = new LHBlock<>(this.overflowFile.getBlockingFactor(), this.overflowFile.getType());
 
-            while (recordIndex < records.size() && overflowBlock.getValidCount() < this.overflowFile.getBlockingFactor()) {
-                overflowBlock.getData()[overflowBlock.getValidCount()] = records.get(recordIndex);
+            while (recordIndex < this.mainFile.getBlockingFactor()) {
+                overflowBlock.getData()[overflowBlock.getValidCount()]  = records.get(recordIndex);
                 overflowBlock.setValidCount(overflowBlock.getValidCount() + 1);
                 recordIndex++;
             }
-
             previousBlock.setNextBlockAddr(overflowAddr);
-            previousBlock = overflowBlock;
-            overflowsUsed++;
-
             this.overflowFile.writeBlock(overflowAddr, overflowBlock);
+            previousBlock = overflowBlock;
+            overflowCount++;
         }
 
+        this.mainFile.writeBlock(bucketAddr, newMainBlock);
         previousBlock.setNextBlockAddr(-1);
-        this.mainFile.writeBlock(bucketAddr, mainBlock);
-
-        return overflowsUsed;
+        return overflowCount;
     }
 
     private List<LHBlock<T>> collectBlocks(int bucketAddr) throws IOException {
