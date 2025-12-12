@@ -192,7 +192,15 @@ public class LinearHashing<T extends IRecord & IHash> {
 
         //naplnenie overflow blokov
         while (recordIndex < records.size()){
-            int overflowAddr = addresses.get(overflowCount);
+            int overflowAddr;
+            /// TODO: spocitat ci staci jeden overflow blok
+            if (overflowCount < addresses.size()) {
+                overflowAddr = addresses.get(overflowCount);
+            } else {
+                overflowAddr = this.overflowFile.getTotalBlockCount();
+                this.overflowFile.insertEmptyBlockAt(overflowAddr);
+                addresses.add(overflowAddr);
+            }
             LHBlock<T> overflowBlock = new LHBlock<>(this.overflowFile.getBlockingFactor(), this.overflowFile.getType());
 
             //to iste co s mainom
@@ -210,7 +218,6 @@ public class LinearHashing<T extends IRecord & IHash> {
         this.mainFile.writeBlock(bucketAddr, newMainBlock);
         previousBlock.setNextBlockAddr(-1);
         return overflowCount;
-        /// TODO: pokrytie pripadu ked nie je dostatok overflow blokov v addresses
     }
 
     private List<LHBlock<T>> collectBlocks(int bucketAddr) throws IOException {
