@@ -1,12 +1,11 @@
 package S2.heapFile;
 
 import S1.trees.avl.AVLTree;
-import S2.linearHashing.IHash;
 import S2.linearHashing.LHBlock;
 
 import java.io.*;
 
-public class HeapFile<T extends IRecord & IHash> {
+public class HeapFile<T extends IRecord> {
     private final RandomAccessFile file;
     private final RandomAccessFile metadata;
     private final IData<T> type;
@@ -15,7 +14,7 @@ public class HeapFile<T extends IRecord & IHash> {
     private final String metadadaPath;
     private final AVLTree<Integer> partiallyFreeBlocks;
     private final AVLTree<Integer> fullyEmptyBlocks;
-    private final boolean useMainHeader;
+    private final boolean useLHBlock;
     private int totalBlocks;
 
     public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize,
@@ -24,7 +23,7 @@ public class HeapFile<T extends IRecord & IHash> {
         this.type = type;
         this.blockSize = blockSize;
         this.metadadaPath = metadataPath;
-        this.useMainHeader = useMainHeader;
+        this.useLHBlock = useMainHeader;
         this.partiallyFreeBlocks = new AVLTree<>();
         this.fullyEmptyBlocks = new AVLTree<>();
 
@@ -62,16 +61,23 @@ public class HeapFile<T extends IRecord & IHash> {
         } else if (this.fullyEmptyBlocks.getNodeCount() > 0) {
             address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
             this.fullyEmptyBlocks.delete(address);
-            block = new Block<>(this.blockingFactor, this.type);
+            block = this.useLHBlock
+                    ? new LHBlock<>(this.blockingFactor, this.type)
+                    : new Block<>(this.blockingFactor, this.type);
             this.partiallyFreeBlocks.insert(address);
         } else {
             address = this.totalBlocks++;
-            block = new Block<>(this.blockingFactor, this.type);
+            block = this.useLHBlock
+                    ? new LHBlock<>(this.blockingFactor, this.type)
+                    : new Block<>(this.blockingFactor, this.type);
             this.partiallyFreeBlocks.insert(address);
         }
 
         block.getData()[block.getValidCount()] = record;
         block.setValidCount(block.getValidCount() + 1);
+        if (this.useLHBlock) {
+            ((LHBlock<T>) block).setNextBlockAddr(-1);
+        }
 
         if (block.isFull()) {
             this.partiallyFreeBlocks.delete(address);
@@ -81,20 +87,19 @@ public class HeapFile<T extends IRecord & IHash> {
         return address;
     }
 
+
     public boolean insertEmptyBlockAt(int address) throws IOException {
         if (address < 0 || address > this.totalBlocks) {
             return false;
         }
-
-        Block<T> block = new Block<>(this.blockingFactor, this.type);
+        //pouziva sa iba v linearnom hashovani, preto pouzivame rovno LHBlock
+        LHBlock<T> block = new LHBlock<>(this.blockingFactor, this.type);
         writeBlock(address, block);
-        /// TODO: todo fix
         this.fullyEmptyBlocks.insert(address);
 
         if (address == this.totalBlocks) {
             this.totalBlocks++;
         }
-
         return true;
     }
 
@@ -191,7 +196,7 @@ public class HeapFile<T extends IRecord & IHash> {
         long blockPosition = (long) address * this.blockSize;
 
         if (blockPosition >= this.file.length()) {
-            return useMainHeader
+            return useLHBlock
                     ? new LHBlock<>(this.blockingFactor, this.type)
                     : new Block<>(this.blockingFactor, this.type);
         }
@@ -200,7 +205,7 @@ public class HeapFile<T extends IRecord & IHash> {
         byte[] bytes = new byte[this.blockSize];
         this.file.readFully(bytes);
 
-        Block<T> block = useMainHeader
+        Block<T> block = useLHBlock
                 ? new LHBlock<>(this.blockingFactor, this.type)
                 : new Block<>(this.blockingFactor, this.type);
         block.fromBytes(bytes);
