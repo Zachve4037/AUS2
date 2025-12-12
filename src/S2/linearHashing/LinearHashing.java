@@ -2,6 +2,8 @@ package S2.linearHashing;
 
 import S2.heapFile.HeapFile;
 import S2.heapFile.IRecord;
+
+import javax.management.InvalidApplicationException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,7 +32,7 @@ public class LinearHashing<T extends IRecord & IHash> {
         }
     }
 
-    public void insert(T record) throws IOException {
+    public void insert(T record) throws Exception {
         if (record == null) return;
         long key = record.getHashCode();
         int bucketAddr = findBucket(key);
@@ -122,7 +124,7 @@ public class LinearHashing<T extends IRecord & IHash> {
         return null;
     }
 
-    private void split() throws IOException {
+    private void split() throws Exception {
         int oldBucketAddr = this.S;
         int newBucketAddr = (int) (S + (M * Math.pow(2, u)));
 
@@ -137,7 +139,6 @@ public class LinearHashing<T extends IRecord & IHash> {
         }
 
         List<Integer> overflowAddresses = new LinkedList<>();
-        overflowAddresses.add(oldBlocks.getFirst().getNextBlockAddr());
         for (int i = 1; i < oldBlocks.size(); i++) {
             overflowAddresses.add(oldBlocks.get(i).getNextBlockAddr());
         }
@@ -162,7 +163,9 @@ public class LinearHashing<T extends IRecord & IHash> {
 
         int usedByOld = fillChain(recordsToOld, oldBucketAddr, overflowAddresses, 0);
         int usedByNew = fillChain(recordsToNew, newBucketAddr, overflowAddresses, usedByOld);
-
+        if (usedByNew != 0) {
+            throw new Exception("Chyba pri rozdeleni zaznamov do novych bucketov.");
+        }
         for (int i = usedByOld + usedByNew; i < overflowAddresses.size(); i++) {
             this.overflowFile.insertEmptyBlockAt(overflowAddresses.get(i));
         }
@@ -217,7 +220,7 @@ public class LinearHashing<T extends IRecord & IHash> {
 
         this.mainFile.writeBlock(bucketAddr, newMainBlock);
         previousBlock.setNextBlockAddr(-1);
-        return overflowCount;
+        return overflowCount - startIndex;
     }
 
     private List<LHBlock<T>> collectBlocks(int bucketAddr) throws IOException {
