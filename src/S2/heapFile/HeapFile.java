@@ -52,25 +52,36 @@ public class HeapFile<T extends IRecord> {
     public int insert(T record) throws IOException {
         if (record == null) return -1;
 
-        Block<T> block;
-        int address;
+        Block<T> block = null;
+        int address = -1;
 
-        if (this.partiallyFreeBlocks.getNodeCount() > 0) {
+        while(this.partiallyFreeBlocks.getNodeCount() > 0) {
             address = this.partiallyFreeBlocks.findMin(this.partiallyFreeBlocks.getRoot());
             block = readBlock(address);
-        } else if (this.fullyEmptyBlocks.getNodeCount() > 0) {
-            address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
-            this.fullyEmptyBlocks.delete(address);
-            block = this.useLHBlock
-                    ? new LHBlock<>(this.blockingFactor, this.type)
-                    : new Block<>(this.blockingFactor, this.type);
-            this.partiallyFreeBlocks.insert(address);
-        } else {
-            address = this.totalBlocks++;
-            block = this.useLHBlock
-                    ? new LHBlock<>(this.blockingFactor, this.type)
-                    : new Block<>(this.blockingFactor, this.type);
-            this.partiallyFreeBlocks.insert(address);
+
+            if (block.isFull()) {
+                this.partiallyFreeBlocks.delete(address);
+                block = null;
+                address = -1;
+                continue;
+            }
+            break;
+        }
+        if (block == null) {
+            if (this.fullyEmptyBlocks.getNodeCount() > 0) {
+                address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
+                this.fullyEmptyBlocks.delete(address);
+                block = this.useLHBlock
+                        ? new LHBlock<>(this.blockingFactor, this.type)
+                        : new Block<>(this.blockingFactor, this.type);
+                this.partiallyFreeBlocks.insert(address);
+            } else {
+                address = this.totalBlocks++;
+                block = this.useLHBlock
+                        ? new LHBlock<>(this.blockingFactor, this.type)
+                        : new Block<>(this.blockingFactor, this.type);
+                this.partiallyFreeBlocks.insert(address);
+            }
         }
 
         block.getData()[block.getValidCount()] = record;
