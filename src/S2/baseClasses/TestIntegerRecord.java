@@ -49,4 +49,8 @@ public class TestIntegerRecord implements IRecord, IHash {
     public String toString() {
         return "IntegerRecord{" + value + "}";
     }
+
+    public int getValue() {
+        return this.value;
+    }
 }

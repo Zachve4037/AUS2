@@ -16,7 +16,7 @@ public class LinearHashing<T extends IRecord & IHash> {
     private int S; // split pointer
     private long recordCount;
 
-    private static final double MAX_DENSITY = 0.75;
+    private static final double MAX_DENSITY = 0.8;
 
     public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, int initialBucketCount) throws IOException {
         this.mainFile = mainFile;
@@ -95,9 +95,11 @@ public class LinearHashing<T extends IRecord & IHash> {
     }
 
     private boolean performSplit() {
-        double currentDensity = (double) this.recordCount /
-                (double) (this.mainFile.getTotalBlockCount() + this.overflowFile.getTotalBlockCount()) /
-                (double) this.mainFile.getBlockingFactor();
+        int mainBlocks = (int) (M * Math.pow(2, u)) + S;
+        int mainCapacity = mainBlocks * this.mainFile.getBlockingFactor();
+        int overflowCapacity = this.overflowFile.getTotalBlockCount() * this.overflowFile.getBlockingFactor();
+        int totalCapacity = mainCapacity + overflowCapacity;
+        double currentDensity = (double) this.recordCount / (double) totalCapacity;
         return currentDensity > MAX_DENSITY;
     }
 
@@ -128,19 +130,25 @@ public class LinearHashing<T extends IRecord & IHash> {
         int oldBucketAddr = this.S;
         int newBucketAddr = (int) (S + (M * Math.pow(2, u)));
 
-        // 1.a nacitanie blokov
-        List<LHBlock<T>> oldBlocks = this.collectBlocks(oldBucketAddr);
-        // 1.b nacitanie zaznamov z blokov
+        List<LHBlock<T>> oldBlocks = new LinkedList<>();
+        List<Integer> overflowAddresses = new LinkedList<>();
+
+        LHBlock<T> mainBlock = (LHBlock<T>) this.mainFile.readBlock(oldBucketAddr);
+        oldBlocks.add(mainBlock);
+
+        int overflowAddr = mainBlock.getNextBlockAddr();
+        while (overflowAddr != -1) {
+            overflowAddresses.add(overflowAddr);
+            LHBlock<T> overflowBlock = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
+            oldBlocks.add(overflowBlock);
+            overflowAddr = overflowBlock.getNextBlockAddr();
+        }
+
         List<T> records = new LinkedList<>();
         for (LHBlock<T> block : oldBlocks) {
             for (int i = 0; i < block.getValidCount(); i++) {
                 records.add(block.getData()[i]);
             }
-        }
-
-        List<Integer> overflowAddresses = new LinkedList<>();
-        for (int i = 1; i < oldBlocks.size(); i++) {
-            overflowAddresses.add(oldBlocks.get(i).getNextBlockAddr());
         }
 
         this.S = this.S + 1;
@@ -149,7 +157,6 @@ public class LinearHashing<T extends IRecord & IHash> {
             this.u = this.u + 1;
         }
 
-        //2 rozdelenie zaznamov
         List<T> recordsToOld = new LinkedList<>();
         List<T> recordsToNew = new LinkedList<>();
         for (T rec : records) {
@@ -163,13 +170,9 @@ public class LinearHashing<T extends IRecord & IHash> {
 
         int usedByOld = fillChain(recordsToOld, oldBucketAddr, overflowAddresses, 0);
         int usedByNew = fillChain(recordsToNew, newBucketAddr, overflowAddresses, usedByOld);
-        if (usedByNew != 0) {
-            throw new Exception("Chyba pri rozdeleni zaznamov do novych bucketov.");
-        }
         for (int i = usedByOld + usedByNew; i < overflowAddresses.size(); i++) {
             this.overflowFile.insertEmptyBlockAt(overflowAddresses.get(i));
         }
-        //odstranenie prazdnych blokov v overflow file
         this.overflowFile.cutEmptyFileBlocks();
     }
 
@@ -180,46 +183,72 @@ public class LinearHashing<T extends IRecord & IHash> {
             int startIndex
     ) throws IOException {
         //naplnenie hlavneho bloku
-        LHBlock<T> newMainBlock = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
+        LHBlock<T> mainBlock;
+        if(bucketAddr < this.mainFile.getTotalBlockCount()) {
+            mainBlock = (LHBlock<T>) this.mainFile.readBlock(bucketAddr);
+            mainBlock.setValidCount(0);
+            mainBlock.setNextBlockAddr(-1);
+        } else {
+            this.mainFile.insertEmptyBlockAt(bucketAddr);
+            mainBlock = new LHBlock<>(this.mainFile.getBlockingFactor(), this.mainFile.getType());
+        }
+
         int recordIndex = 0;
 
-        //naplnam iba pokym nie je plny, ci aj nejaky dalsi check?
-        while(!newMainBlock.isFull() && recordIndex < records.size()) {
-            newMainBlock.getData()[newMainBlock.getValidCount()] = records.get(recordIndex);
-            newMainBlock.setValidCount(newMainBlock.getValidCount() + 1);
+        //naplnam iba pokym nie je plny
+        while(!mainBlock.isFull() && recordIndex < records.size()) {
+            mainBlock.getData()[mainBlock.getValidCount()] = records.get(recordIndex);
+            mainBlock.setValidCount(mainBlock.getValidCount() + 1);
             recordIndex++;
         }
+
+        //ak sa uz zmestili vsetky zaznamy koniec
+        if (recordIndex >= records.size()) {
+            mainBlock.setNextBlockAddr(-1);
+            this.mainFile.writeBlock(bucketAddr, mainBlock);
+            return 0;
+        }
+
         // overflow index, aby sme pouzili este dostupne adresy
         int overflowCount = startIndex;
-        LHBlock<T> previousBlock = newMainBlock;
+        LHBlock<T> previousBlock = mainBlock;
 
         //naplnenie overflow blokov
         while (recordIndex < records.size()){
             int overflowAddr;
-            /// TODO: spocitat ci staci jeden overflow blok
+            LHBlock<T> overflowBlock;
             if (overflowCount < addresses.size()) {
                 overflowAddr = addresses.get(overflowCount);
+                overflowBlock = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
+                overflowBlock.setValidCount(0);
+                overflowBlock.setNextBlockAddr(-1);
             } else {
                 overflowAddr = this.overflowFile.getTotalBlockCount();
                 this.overflowFile.insertEmptyBlockAt(overflowAddr);
+                overflowBlock = new LHBlock<>(this.overflowFile.getBlockingFactor(), this.overflowFile.getType());
                 addresses.add(overflowAddr);
             }
-            LHBlock<T> overflowBlock = new LHBlock<>(this.overflowFile.getBlockingFactor(), this.overflowFile.getType());
 
             //to iste co s mainom
             while (!overflowBlock.isFull() && recordIndex < records.size()) {
-                overflowBlock.getData()[overflowBlock.getValidCount()]  = records.get(recordIndex);
+                overflowBlock.getData()[overflowBlock.getValidCount()] = records.get(recordIndex);
                 overflowBlock.setValidCount(overflowBlock.getValidCount() + 1);
                 recordIndex++;
             }
+
             previousBlock.setNextBlockAddr(overflowAddr);
-            this.overflowFile.writeBlock(overflowAddr, overflowBlock);
+            if (previousBlock != mainBlock) {
+                this.overflowFile.writeBlock(addresses.get(overflowCount -1), previousBlock);
+            }
             previousBlock = overflowBlock;
             overflowCount++;
         }
 
-        this.mainFile.writeBlock(bucketAddr, newMainBlock);
+        //zapisanie blokov
         previousBlock.setNextBlockAddr(-1);
+        this.mainFile.writeBlock(bucketAddr, mainBlock);
+        this.overflowFile.writeBlock(addresses.get(overflowCount -1), previousBlock);
+
         return overflowCount - startIndex;
     }
 

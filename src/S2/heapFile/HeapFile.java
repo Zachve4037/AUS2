@@ -27,7 +27,7 @@ public class HeapFile<T extends IRecord> {
         this.partiallyFreeBlocks = new AVLTree<>();
         this.fullyEmptyBlocks = new AVLTree<>();
 
-        int headerSize = useMainHeader ? 12 : 4;
+        int headerSize = useMainHeader ? 8 : 4;
         this.blockingFactor = (blockSize - headerSize) / recordSize;
 
         if (blockingFactor <= 0) {
