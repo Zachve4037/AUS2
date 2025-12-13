@@ -262,6 +262,8 @@ public class BTester {
                 printBuckets(mainHF, overflowHF);
             }
 
+            printBuckets(mainHF, overflowHF);
+
             mainRaf.close();
             overflowRaf.close();
         } catch (Exception e) {

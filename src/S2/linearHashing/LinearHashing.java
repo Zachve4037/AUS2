@@ -127,6 +127,33 @@ public class LinearHashing<T extends IRecord & IHash> {
         return null;
     }
 
+    public T update(T wanted) throws IOException {
+        if (wanted == null) return null;
+        long key = wanted.getHashCode();
+        int bucket = findBucket(key);
+        LHBlock<T> mainBucket = (LHBlock<T>) this.mainFile.readBlock(bucket);
+        for (int i = 0; i < mainBucket.getValidCount(); i++) {
+            if (mainBucket.getData()[i].equals(wanted)) {
+                mainBucket.getData()[i] = wanted;
+                this.mainFile.writeBlock(bucket, mainBucket);
+                return mainBucket.getData()[i];
+            }
+        }
+        int overflowAddr = mainBucket.getNextBlockAddr();
+        while (overflowAddr != -1) {
+            LHBlock<T> overflowBucket = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
+            for (int i = 0; i < overflowBucket.getValidCount(); i++) {
+                if (overflowBucket.getData()[i].equals(wanted)) {
+                    overflowBucket.getData()[i] = wanted;
+                    this.overflowFile.writeBlock(overflowAddr, overflowBucket);
+                    return overflowBucket.getData()[i];
+                }
+            }
+            overflowAddr = overflowBucket.getNextBlockAddr();
+        }
+        return null;
+    }
+
     private void split() throws Exception {
         System.out.println("Splitting bucket at address: " + this.S);
         int oldBucketAddr = this.S;
