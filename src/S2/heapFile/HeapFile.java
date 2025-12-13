@@ -119,7 +119,7 @@ public class HeapFile<T extends IRecord> {
         //pouziva sa iba v linearnom hashovani, preto pouzivame rovno LHBlock
         LHBlock<T> block = new LHBlock<>(this.blockingFactor, this.type);
         writeBlock(address, block);
-        this.fullyEmptyBlocks.insert(address);
+//        this.fullyEmptyBlocks.insert(address);
 
         if (address == this.totalBlocks) {
             this.totalBlocks++;
