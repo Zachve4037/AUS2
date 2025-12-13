@@ -8,7 +8,7 @@ import javax.swing.*;
 public class Main {
     public static void main(String[] args) {
         BTester tester = new BTester();
-        tester.testLinearHashingManual();
+//        tester.testLinearHashingManual();
         tester.testLinearHashing();
 //        tester.testHeapFile();
 //        tester.testLeftmostInsertion();

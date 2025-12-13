@@ -55,32 +55,45 @@ public class HeapFile<T extends IRecord> {
         Block<T> block = null;
         int address = -1;
 
-        while(this.partiallyFreeBlocks.getNodeCount() > 0) {
-            address = this.partiallyFreeBlocks.findMin(this.partiallyFreeBlocks.getRoot());
-            block = readBlock(address);
+        if (!this.useLHBlock) {
+            while (this.partiallyFreeBlocks.getNodeCount() > 0) {
+                address = this.partiallyFreeBlocks.findMin(this.partiallyFreeBlocks.getRoot());
+                block = readBlock(address);
 
-            if (block.isFull()) {
-                this.partiallyFreeBlocks.delete(address);
-                block = null;
-                address = -1;
-                continue;
+                if (block.isFull()) {
+                    this.partiallyFreeBlocks.delete(address);
+                    block = null;
+                    address = -1;
+                    continue;
+                }
+                break;
             }
-            break;
         }
         if (block == null) {
-            if (this.fullyEmptyBlocks.getNodeCount() > 0) {
-                address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
-                this.fullyEmptyBlocks.delete(address);
-                block = this.useLHBlock
-                        ? new LHBlock<>(this.blockingFactor, this.type)
-                        : new Block<>(this.blockingFactor, this.type);
-                this.partiallyFreeBlocks.insert(address);
+            if (!this.useLHBlock) {
+                if (this.fullyEmptyBlocks.getNodeCount() > 0) {
+                    address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
+                    this.fullyEmptyBlocks.delete(address);
+                    block = this.useLHBlock
+                            ? new LHBlock<>(this.blockingFactor, this.type)
+                            : new Block<>(this.blockingFactor, this.type);
+                    this.partiallyFreeBlocks.insert(address);
+                } else {
+                    address = this.totalBlocks++;
+                    block = this.useLHBlock
+                            ? new LHBlock<>(this.blockingFactor, this.type)
+                            : new Block<>(this.blockingFactor, this.type);
+                    this.partiallyFreeBlocks.insert(address);
+                }
             } else {
-                address = this.totalBlocks++;
-                block = this.useLHBlock
-                        ? new LHBlock<>(this.blockingFactor, this.type)
-                        : new Block<>(this.blockingFactor, this.type);
-                this.partiallyFreeBlocks.insert(address);
+                if (this.fullyEmptyBlocks.getNodeCount() > 0) {
+                    address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
+                    this.fullyEmptyBlocks.delete(address);
+                    block = new LHBlock<>(this.blockingFactor, this.type);
+                } else {
+                    address = this.totalBlocks++;
+                    block = new LHBlock<>(this.blockingFactor, this.type);
+                }
             }
         }
 
@@ -90,7 +103,7 @@ public class HeapFile<T extends IRecord> {
             ((LHBlock<T>) block).setNextBlockAddr(-1);
         }
 
-        if (block.isFull()) {
+        if (block.isFull() && !this.useLHBlock) {
             this.partiallyFreeBlocks.delete(address);
         }
 

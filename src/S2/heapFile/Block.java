@@ -33,12 +33,13 @@ public class Block<T extends IRecord> {
         return this.data;
     }
 
-    public boolean isFull() {
-        return this.validCount >= this.capacity;
+    public void setDataNull() {
+        T temp = this.type.createClass();
+        this.data = (T[]) Array.newInstance(temp.getClass(), capacity);
     }
 
-    public IData<T> getType() {
-        return this.type;
+    public boolean isFull() {
+        return this.validCount >= this.capacity;
     }
 
     public boolean isEmpty() {
@@ -64,7 +65,6 @@ public class Block<T extends IRecord> {
 
         return buffer.array();
     }
-
 
     public void fromBytes(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
