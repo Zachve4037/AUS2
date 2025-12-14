@@ -2,8 +2,6 @@ package S2.db;
 
 import S2.baseClasses.PCRTest;
 import S2.baseClasses.PersonBinary;
-import S2.heapFile.Block;
-import S2.heapFile.IRecord;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,12 +49,15 @@ public class HeapDumpDialog extends JDialog {
 
         Metadata meta = loadMetadata();
         if (meta == null) {
-            return sb.append("Failed to load metadata.\n").toString();
+            sb.append("Warning: Metadata file is empty or invalid. Deriving from data file.\n\n");
+            meta = deriveMetadataFromDataFile();
+            if (meta == null) {
+                return sb.append("Failed to derive metadata.\n").toString();
+            }
         }
 
         sb.append("Metadata.totalBlocks = ").append(meta.totalBlocks).append("\n");
 
-        // Detect record type and block size
         RecordTypeInfo typeInfo = detectRecordType(meta);
         if (typeInfo == null) {
             return sb.append("Failed to detect record type.\n").toString();
@@ -79,6 +80,49 @@ public class HeapDumpDialog extends JDialog {
         return sb.toString();
     }
 
+    private Metadata deriveMetadataFromDataFile() {
+        try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
+            long fileSize = raf.length();
+            if (fileSize == 0) return null;
+
+            boolean isPeople = dataFile.getName().contains("people");
+            int recordSize = isPeople ? 1788 : 268;
+            int headerSize = 8;
+
+            for (int blockingFactor = 1; blockingFactor <= 20; blockingFactor++) {
+                int blockSize = headerSize + (blockingFactor * recordSize);
+                if (fileSize % blockSize == 0) {
+                    Metadata meta = new Metadata();
+                    meta.totalBlocks = (int) (fileSize / blockSize);
+                    meta.partiallyFree = new ArrayList<>();
+                    meta.fullyEmpty = new ArrayList<>();
+                    meta.rawBytes = new byte[0];
+                    return meta;
+                }
+            }
+
+            int blockingFactor = 1;
+            int blockSize = headerSize + (blockingFactor * recordSize);
+            while (blockSize < fileSize) {
+                blockingFactor++;
+                blockSize = headerSize + (blockingFactor * recordSize);
+            }
+
+            blockingFactor--;
+            blockSize = headerSize + (blockingFactor * recordSize);
+
+            Metadata meta = new Metadata();
+            meta.totalBlocks = (int) (fileSize / blockSize);
+            meta.partiallyFree = new ArrayList<>();
+            meta.fullyEmpty = new ArrayList<>();
+            meta.rawBytes = new byte[0];
+            return meta;
+
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     private static class RecordTypeInfo {
         String typeName;
         int recordSize;
@@ -98,35 +142,23 @@ public class HeapDumpDialog extends JDialog {
             RecordTypeInfo info = new RecordTypeInfo();
             info.blockSize = blockSize;
 
-            // Try PersonBinary (1914 bytes)
-            int headerSize = 4;
-            int personRecordSize = 1914;
-            int personBlockingFactor = (blockSize - headerSize) / personRecordSize;
-            int expectedPersonBlockSize = headerSize + (personBlockingFactor * personRecordSize);
+            int headerSize = this.dataFile.getName().contains("_main") || this.dataFile.getName().contains("_overflow") ? 8 : 4;
+            boolean isPeople = dataFile.getName().contains("people");
 
-            if (expectedPersonBlockSize == blockSize) {
+            if (isPeople) {
+                int personRecordSize = 1788;
+                int blockingFactor = (blockSize - headerSize) / personRecordSize;
                 info.typeName = "PersonBinary";
                 info.recordSize = personRecordSize;
-                info.blockingFactor = personBlockingFactor;
-                return info;
-            }
-
-            // Try PCRTest (289 bytes)
-            int testRecordSize = 268;
-            int testBlockingFactor = (blockSize - headerSize) / testRecordSize;
-            int expectedTestBlockSize = headerSize + (testBlockingFactor * testRecordSize);
-
-            if (expectedTestBlockSize == blockSize) {
+                info.blockingFactor = blockingFactor;
+            } else {
+                int testRecordSize = 268;
+                int blockingFactor = (blockSize - headerSize) / testRecordSize;
                 info.typeName = "PCRTest";
                 info.recordSize = testRecordSize;
-                info.blockingFactor = testBlockingFactor;
-                return info;
+                info.blockingFactor = blockingFactor;
             }
 
-            // Fallback: calculate from block size
-            info.typeName = "Unknown";
-            info.recordSize = (blockSize - headerSize) / 2; // Assume blocking factor of 2
-            info.blockingFactor = 2;
             return info;
 
         } catch (IOException e) {
@@ -137,9 +169,9 @@ public class HeapDumpDialog extends JDialog {
     private void dumpDataBlocks(StringBuilder sb, Metadata meta, RecordTypeInfo typeInfo) {
         try (RandomAccessFile raf = new RandomAccessFile(dataFile, "r")) {
             long fileSize = raf.length();
-            int maxIndex = (int) (fileSize / typeInfo.blockSize) - 1;
+            int maxBlocks = (int) (fileSize / typeInfo.blockSize);
 
-            for (int b = 0; b <= Math.min(maxIndex, meta.totalBlocks - 1); b++) {
+            for (int b = 0; b < maxBlocks; b++) {
                 long offset = (long) b * typeInfo.blockSize;
                 sb.append("Block ").append(b).append(" @ offset ").append(offset).append("\n");
 
@@ -147,26 +179,26 @@ public class HeapDumpDialog extends JDialog {
                 byte[] blockBytes = new byte[typeInfo.blockSize];
                 int bytesRead = raf.read(blockBytes);
 
-                if (bytesRead < 4) {
+                if (bytesRead < 8) {
                     sb.append("  (incomplete block)\n\n");
                     continue;
                 }
 
                 int validCount = java.nio.ByteBuffer.wrap(blockBytes, 0, 4).getInt();
-
-                if (validCount < 0 || validCount > typeInfo.blockingFactor) {
-                    sb.append("  (invalid validCount: ").append(validCount).append(")\n\n");
-                    continue;
-                }
+                int nextBlockAddr = java.nio.ByteBuffer.wrap(blockBytes, 4, 4).getInt();
 
                 sb.append("  validCount = ").append(validCount).append("\n");
+                sb.append("  nextBlockAddr = ").append(nextBlockAddr).append("\n");
+
+                if (validCount < 0 || validCount > typeInfo.blockingFactor) {
+                    sb.append("  (invalid validCount)\n\n");
+                    continue;
+                }
 
                 if ("PersonBinary".equals(typeInfo.typeName)) {
                     dumpPersonBinaryRecords(sb, blockBytes, validCount, typeInfo);
                 } else if ("PCRTest".equals(typeInfo.typeName)) {
                     dumpPCRTestRecords(sb, blockBytes, validCount, typeInfo);
-                } else {
-                    dumpGenericRecords(sb, blockBytes, validCount, typeInfo);
                 }
 
                 sb.append("\n");
@@ -177,8 +209,9 @@ public class HeapDumpDialog extends JDialog {
     }
 
     private void dumpPersonBinaryRecords(StringBuilder sb, byte[] blockBytes, int validCount, RecordTypeInfo typeInfo) {
+        int headerSize = 8;
         for (int r = 0; r < typeInfo.blockingFactor; r++) {
-            int offset = 4 + (r * typeInfo.recordSize);
+            int offset = headerSize + (r * typeInfo.recordSize);
             byte[] recordBytes = new byte[typeInfo.recordSize];
             System.arraycopy(blockBytes, offset, recordBytes, 0, typeInfo.recordSize);
 
@@ -188,7 +221,7 @@ public class HeapDumpDialog extends JDialog {
                     person.fromBytes(recordBytes);
                     sb.append("    Record ").append(r).append(": ").append(person.toString()).append("\n");
                 } catch (Exception e) {
-                    sb.append("    Record ").append(r).append(": (parse error: ").append(e.getMessage()).append(")\n");
+                    sb.append("    Record ").append(r).append(": (parse error)\n");
                 }
             } else {
                 sb.append("    Record ").append(r).append(": (empty)\n");
@@ -198,7 +231,7 @@ public class HeapDumpDialog extends JDialog {
 
     private void dumpPCRTestRecords(StringBuilder sb, byte[] blockBytes, int validCount, RecordTypeInfo typeInfo) {
         for (int r = 0; r < typeInfo.blockingFactor; r++) {
-            int offset = 4 + (r * typeInfo.recordSize);
+            int offset = 8 + (r * typeInfo.recordSize);
             byte[] recordBytes = new byte[typeInfo.recordSize];
             System.arraycopy(blockBytes, offset, recordBytes, 0, typeInfo.recordSize);
 
@@ -212,18 +245,6 @@ public class HeapDumpDialog extends JDialog {
                 }
             } else {
                 sb.append("    Record ").append(r).append(": (empty)\n");
-            }
-        }
-    }
-
-    private void dumpGenericRecords(StringBuilder sb, byte[] blockBytes, int validCount, RecordTypeInfo typeInfo) {
-        for (int r = 0; r < typeInfo.blockingFactor; r++) {
-            sb.append("  Record ").append(r).append(": ");
-            if (r < validCount) {
-                int recOffset = 4 + r * typeInfo.recordSize;
-                sb.append("raw: ").append(bytesToBinary(blockBytes, recOffset, Math.min(32, typeInfo.recordSize))).append("\n");
-            } else {
-                sb.append("(empty)\n");
             }
         }
     }
@@ -273,15 +294,6 @@ public class HeapDumpDialog extends JDialog {
             if (i > 0 && i % 4 == 0) sb.append(" ");
             sb.append(String.format("%8s", Integer.toBinaryString(bytes[i] & 0xFF)).replace(' ', '0'));
             if (i < limit - 1) sb.append(" ");
-        }
-        return sb.toString();
-    }
-
-    private String bytesToBinary(byte[] arr, int offset, int len) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < len && (offset + i) < arr.length; i++) {
-            sb.append(String.format("%8s", Integer.toBinaryString(arr[offset + i] & 0xFF)).replace(' ', '0'));
-            if (i < len - 1) sb.append(" ");
         }
         return sb.toString();
     }

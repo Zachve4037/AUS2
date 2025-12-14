@@ -11,7 +11,7 @@ import java.util.List;
 public class LinearHashing<T extends IRecord & IHash> {
     private HeapFile<T> mainFile;
     private HeapFile<T> overflowFile;
-    private final int M;
+    private int M;
     private int u;
     private int S;
     private long recordCount;
@@ -30,6 +30,15 @@ public class LinearHashing<T extends IRecord & IHash> {
         for (int i =0; i < M; i++) {
             this.mainFile.insertEmptyBlockAt(i);
         }
+    }
+
+    public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, int M, int u, int S, long recordCount) {
+        this.mainFile = mainFile;
+        this.overflowFile = overflowFile;
+        this.M = M;
+        this.u = u;
+        this.S = S;
+        this.recordCount = recordCount;
     }
 
     public void insert(T record) throws Exception {
@@ -281,5 +290,42 @@ public class LinearHashing<T extends IRecord & IHash> {
             i = (int) (key % (base << 1));
         }
         return i;
+    }
+
+    public int getM() {
+        return this.M;
+    }
+
+    public void setM(int m) {
+        this.M = m;
+    }
+
+    public int getU() {
+        return this.u;
+    }
+
+    public void setU(int u) {
+        this.u = u;
+    }
+
+    public int getS() {
+        return this.S;
+    }
+
+    public void setS(int s) {
+        this.S = s;
+    }
+
+    public void close() throws IOException {
+        this.mainFile.close();
+        this.overflowFile.close();
+    }
+
+    public HeapFile<T> getMainFile() {
+        return this.mainFile;
+    }
+
+    public HeapFile<T> getOverflowFile() {
+        return this.overflowFile;
     }
 }

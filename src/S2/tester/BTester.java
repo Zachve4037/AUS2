@@ -206,8 +206,8 @@ public class BTester {
                 HeapFile<PersonBinary> hf = new HeapFile<>(
                         raf,
                         PersonBinary::new,
-                        1914,
-                        1914 * 2,
+                        1788,
+                        1788 * 2,
                         metaFile.getAbsolutePath()
                 );
 

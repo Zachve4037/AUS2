@@ -306,4 +306,8 @@ public class HeapFile<T extends IRecord> {
     public int getBlockingFactor() {
         return this.blockingFactor;
     }
+
+    public int getBlockSize() {
+        return this.blockSize;
+    }
 }

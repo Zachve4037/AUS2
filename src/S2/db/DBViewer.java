@@ -6,6 +6,7 @@ import S2.baseClasses.PersonBinary;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Random;
@@ -46,6 +47,7 @@ public class DBViewer extends JFrame {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
+        JButton openDirBtn = new JButton("Open Data Directory");
         JButton initBtn = new JButton("Initialize DB");
         JButton closeBtn = new JButton("Close DB");
         JButton fillBtn = new JButton("Fill Database");
@@ -57,32 +59,42 @@ public class DBViewer extends JFrame {
         JButton updateTestBtn = new JButton("Update Test");
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
-        panel.add(initBtn, gbc);
+        panel.add(openDirBtn, gbc);
 
         gbc.gridy = 1;
-        panel.add(closeBtn, gbc);
+        panel.add(initBtn, gbc);
 
         gbc.gridy = 2;
+        panel.add(closeBtn, gbc);
+
+        gbc.gridy = 3;
         panel.add(fillBtn, gbc);
 
         gbc.gridwidth = 1;
-        gbc.gridy = 3; gbc.gridx = 0;
+        gbc.gridy = 4; gbc.gridx = 0;
         panel.add(insertPersonBtn, gbc);
         gbc.gridx = 1;
         panel.add(insertTestBtn, gbc);
 
-        gbc.gridy = 4; gbc.gridx = 0;
+        gbc.gridy = 5; gbc.gridx = 0;
         panel.add(findPersonBtn, gbc);
         gbc.gridx = 1;
         panel.add(findTestBtn, gbc);
 
-        gbc.gridy = 5; gbc.gridx = 0;
+        gbc.gridy = 6; gbc.gridx = 0;
         panel.add(updatePersonBtn, gbc);
         gbc.gridx = 1;
         panel.add(updateTestBtn, gbc);
 
+        openDirBtn.addActionListener(e -> openExistingDatabase());
         initBtn.addActionListener(e -> initializeDatabase());
-        closeBtn.addActionListener(e -> closeDatabase());
+        closeBtn.addActionListener(e -> {
+            try {
+                closeDatabase();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
         fillBtn.addActionListener(e -> fillDatabase());
         insertPersonBtn.addActionListener(e -> insertPerson());
         insertTestBtn.addActionListener(e -> insertTest());
@@ -122,13 +134,109 @@ public class DBViewer extends JFrame {
         return panel;
     }
 
+    private void openExistingDatabase() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setDialogTitle("Select Existing Database Directory");
+        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File selectedDir = chooser.getSelectedFile();
+            try {
+
+                File configFile = new File(selectedDir, "db_config.txt");
+                if (configFile.exists()) {
+                    currentDataDirectory = selectedDir.getAbsolutePath();
+                    database = new DB(currentDataDirectory);
+
+                    showResult("Database opened from existing configuration!\n" +
+                            "Directory: " + currentDataDirectory);
+                } else {
+                    showResult("No configuration file found in directory.\n" +
+                            "Please use 'Initialize DB' to create a new database.");
+                }
+
+            } catch (Exception ex) {
+                showResult("Error opening database: " + ex.getMessage());
+                ex.printStackTrace();
+                database = null;
+            }
+        }
+    }
+
+    private static class BlockSizeInfo {
+        int peopleMainBlockSize;
+        int peopleOverflowBlockSize;
+        int testsMainBlockSize;
+        int testsOverflowBlockSize;
+    }
+
+    private BlockSizeInfo inferBlockSizes(File dir) {
+        try {
+            BlockSizeInfo info = new BlockSizeInfo();
+
+            File peopleMain = new File(dir, "people_main.dat");
+            File peopleMainMeta = new File(dir, "people_main.meta");
+            info.peopleMainBlockSize = calculateBlockSize(peopleMain, peopleMainMeta, 1788);
+
+            File peopleOverflow = new File(dir, "people_overflow.dat");
+            File peopleOverflowMeta = new File(dir, "people_overflow.meta");
+            if (peopleOverflow.exists() && peopleOverflowMeta.exists()) {
+                info.peopleOverflowBlockSize = calculateBlockSize(peopleOverflow, peopleOverflowMeta, 1788);
+            } else {
+                info.peopleOverflowBlockSize = 1788 * 2;
+            }
+
+            File testsMain = new File(dir, "tests_main.dat");
+            File testsMainMeta = new File(dir, "tests_main.meta");
+            info.testsMainBlockSize = calculateBlockSize(testsMain, testsMainMeta, 268);
+
+            File testsOverflow = new File(dir, "tests_overflow.dat");
+            File testsOverflowMeta = new File(dir, "tests_overflow.meta");
+            if (testsOverflow.exists() && testsOverflowMeta.exists()) {
+                info.testsOverflowBlockSize = calculateBlockSize(testsOverflow, testsOverflowMeta, 268);
+            } else {
+                info.testsOverflowBlockSize = 268 * 2;
+            }
+
+            return info;
+
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private int calculateBlockSize(File dataFile, File metaFile, int recordSize) throws IOException {
+        try (java.io.RandomAccessFile metaRaf = new java.io.RandomAccessFile(metaFile, "r")) {
+            if (metaRaf.length() < 4) {
+                return recordSize * 2;
+            }
+
+            int totalBlocks = metaRaf.readInt();
+            if (totalBlocks == 0) {
+                return recordSize * 2;
+            }
+
+            long fileSize = dataFile.length();
+            return (int) (fileSize / totalBlocks);
+        }
+    }
+
+
     private void initializeDatabase() {
         JPanel configPanel = new JPanel(new GridLayout(5, 2, 5, 5));
 
-        JTextField peopleMainField = new JTextField("1922");
-        JTextField peopleOverflowField = new JTextField("1922");
-        JTextField testsMainField = new JTextField("276");
-        JTextField testsOverflowField = new JTextField("276");
+        int peopleRecordSize = 1788;
+        int testsRecordSize = 268;
+        int headerSize = 8;
+
+        int peopleBlockSize = headerSize + (1 * peopleRecordSize);
+        int testsBlockSize = headerSize + (1 * testsRecordSize);
+
+        JTextField peopleMainField = new JTextField(String.valueOf(peopleBlockSize));
+        JTextField peopleOverflowField = new JTextField(String.valueOf(peopleBlockSize));
+        JTextField testsMainField = new JTextField(String.valueOf(testsBlockSize));
+        JTextField testsOverflowField = new JTextField(String.valueOf(testsBlockSize));
         JTextField directoryField = new JTextField("data");
 
         configPanel.add(new JLabel("People Main Block Size (bytes):"));
@@ -139,7 +247,7 @@ public class DBViewer extends JFrame {
         configPanel.add(testsMainField);
         configPanel.add(new JLabel("Test Overflow Block Size (bytes):"));
         configPanel.add(testsOverflowField);
-        configPanel.add(new JLabel("Data Directory:"));
+        configPanel.add(new JLabel("Data directory:"));
         configPanel.add(directoryField);
 
         int result = JOptionPane.showConfirmDialog(this, configPanel,
@@ -162,12 +270,12 @@ public class DBViewer extends JFrame {
                 database = new DB(currentDataDirectory, peopleBucketSizeMain, peopleBucketSizeOverflow,
                         testBucketSizeMain, testBucketSizeOverflow);
 
-                showResult("Database initialized successfully!\n" +
-                        "Directory: " + currentDataDirectory + "\n" +
-                        "People Main: " + peopleBucketSizeMain + " bytes long block\n" +
-                        "People Overflow: " + peopleBucketSizeOverflow + " bytes long block\n" +
-                        "Tests Main: " + testBucketSizeMain + " bytes long block\n" +
-                        "Tests Overflow: " + testBucketSizeOverflow + " bytes long block");
+                showResult("Database initialized successfully.\n" +
+                        "People main: " + peopleBucketSizeMain + " bytes\n" +
+                        "People overflow: " + peopleBucketSizeOverflow + " bytes\n" +
+                        "Tests main: " + testBucketSizeMain + " bytes\n" +
+                        "Tests overflow: " + testBucketSizeOverflow + " bytes");
+
 
             } catch (NumberFormatException ex) {
                 showResult("Error: Invalid number format");
@@ -178,14 +286,14 @@ public class DBViewer extends JFrame {
         }
     }
 
-    private void closeDatabase() {
+    private void closeDatabase() throws IOException {
         if (database == null) {
             showResult("No database is currently open");
             return;
         }
+        database.close();
         database = null;
-        currentDataDirectory = null;
-        showResult("Database closed successfully");
+        showResult("Database closed successfully\nDirectory still accessible: " + currentDataDirectory);
     }
 
     private void fillDatabase() {
@@ -252,7 +360,7 @@ public class DBViewer extends JFrame {
     }
 
     private PCRTest generateRandomTest(Random rng, String patientId) {
-        LocalDateTime testTime = LocalDateTime.now().minusDays(rng.nextInt(365));
+        LocalDateTime testTime = LocalDateTime.now();
         boolean result = rng.nextBoolean();
         double value = rng.nextDouble() * 100;
         String note = result ? "Positive" : "Negative";
@@ -394,16 +502,17 @@ public class DBViewer extends JFrame {
 
                 JPanel panel = new JPanel(new GridLayout(3, 2, 5, 5));
 
-                // Extract current values
-                String currentData = existing.toString();
-                String[] parts = currentData.split(", ");
-                String currentName = parts.length > 0 ? parts[0].split(": ")[1] : "";
-                String currentSurname = parts.length > 1 ? parts[1].split(": ")[1] : "";
-                String currentBirth = parts.length > 2 ? parts[2].split(": ")[1] : "2000-01-01";
+                JTextField nameField = new JTextField(existing.getName() != null ? existing.getName() : "", 15);
+                JTextField surnameField = new JTextField(existing.getSurname() != null ? existing.getSurname() : "", 15);
 
-                JTextField nameField = new JTextField(currentName, 15);
-                JTextField surnameField = new JTextField(currentSurname, 15);
-                JTextField birthField = new JTextField(currentBirth, 15);
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                String birthDateStr;
+                if (existing.getBirthDate() != null) {
+                    birthDateStr = sdf.format(existing.getBirthDate());
+                } else {
+                    birthDateStr = "2000-01-01";
+                }
+                JTextField birthField = new JTextField(birthDateStr, 15);
 
                 panel.add(new JLabel("Name:"));
                 panel.add(nameField);
@@ -416,7 +525,6 @@ public class DBViewer extends JFrame {
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
                 if (result == JOptionPane.OK_OPTION) {
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
                     Date birthDate = sdf.parse(birthField.getText());
                     PersonBinary updated = new PersonBinary(nameField.getText(), surnameField.getText(), birthDate, id);
                     database.updatePerson(id, updated);
@@ -424,6 +532,7 @@ public class DBViewer extends JFrame {
                 }
             } catch (Exception ex) {
                 showResult("Error: " + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
@@ -445,9 +554,6 @@ public class DBViewer extends JFrame {
                 }
 
                 JPanel panel = new JPanel(new GridLayout(4, 2, 5, 5));
-
-                // Extract current values (adjust based on your PCRTest.toString() format)
-                String currentData = existing.toString();
 
                 JTextField timeField = new JTextField("2024-01-01T12:00", 15);
                 JComboBox<String> resultField = new JComboBox<>(new String[]{"true", "false"});
@@ -487,21 +593,55 @@ public class DBViewer extends JFrame {
         }
     }
 
-
     private void viewHeapFile(String fileName) {
-        if (currentDataDirectory == null) {
-            showResult("No database directory set");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select Directory Containing " + fileName);
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        if (currentDataDirectory != null) {
+            fileChooser.setCurrentDirectory(new File(currentDataDirectory));
+        }
+
+        int result = fileChooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
             return;
         }
 
-        File dataFile = new File(currentDataDirectory, fileName + ".dat");
-        File metaFile = new File(currentDataDirectory, fileName + ".meta");
+        File selectedDirectory = fileChooser.getSelectedFile();
+
+        String dataFileName = fileName.endsWith(".dat") ? fileName : fileName + ".dat";
+        String metaFileName = fileName.endsWith(".dat") ?
+                fileName.replace(".dat", ".meta") : fileName + ".meta";
+
+        File dataFile = new File(selectedDirectory, dataFileName);
+        File metaFile = new File(selectedDirectory, metaFileName);
 
         if (!dataFile.exists() || !metaFile.exists()) {
-            showResult("File not found: " + fileName);
+            File dataSubDir = new File(selectedDirectory, "data");
+            if (dataSubDir.exists() && dataSubDir.isDirectory()) {
+                dataFile = new File(dataSubDir, dataFileName);
+                metaFile = new File(dataSubDir, metaFileName);
+                if (dataFile.exists() && metaFile.exists()) {
+                    selectedDirectory = dataSubDir;
+                }
+            }
+        }
+
+        if (!dataFile.exists()) {
+            JOptionPane.showMessageDialog(this,
+                    "Data file not found: " + dataFile.getAbsolutePath(),
+                    "File Not Found", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        if (!metaFile.exists()) {
+            JOptionPane.showMessageDialog(this,
+                    "Metadata file not found: " + metaFile.getAbsolutePath(),
+                    "File Not Found", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        currentDataDirectory = selectedDirectory.getAbsolutePath();
         HeapDumpDialog dialog = new HeapDumpDialog(this, dataFile, metaFile);
         dialog.setVisible(true);
     }

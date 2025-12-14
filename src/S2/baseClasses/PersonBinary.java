@@ -2,9 +2,7 @@ package S2.baseClasses;
 
 import S2.heapFile.IRecord;
 import S2.linearHashing.IHash;
-
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
@@ -51,8 +49,8 @@ public class PersonBinary implements IRecord, IHash {
         // birthDate: 8
         // id: 4 + 40 = 44
         // testCount: 4
-        // tests[6]: 6 * 289 = 1734
-        return 1914;
+        // tests[6]: 6 * 268 = 1608
+        return 1788;
     }
 
     @Override
@@ -69,7 +67,7 @@ public class PersonBinary implements IRecord, IHash {
             if (i < this.testCount && this.tests[i] != null) {
                 buffer.put(tests[i].getBytes());
             } else {
-                buffer.put(new byte[289]);
+                buffer.put(new byte[268]);
             }
         }
 
@@ -177,6 +175,10 @@ public class PersonBinary implements IRecord, IHash {
         return this.testCount;
     }
 
+    public void setTestCount(int count) {
+        this.testCount = count;
+    }
+
     public String getName() {
         return this.name;
     }
@@ -199,5 +201,23 @@ public class PersonBinary implements IRecord, IHash {
                 return;
             }
         }
+    }
+
+    public PCRTest[] getTests() {
+        return this.tests;
+    }
+
+    public void setTests(PCRTest[] tests) {
+        this.tests = tests;
+        this.testCount = 0;
+        for (PCRTest test : tests) {
+            if (test != null) {
+                this.testCount++;
+            }
+        }
+    }
+
+    public Date getBirthDate() {
+        return this.birthDate;
     }
 }
