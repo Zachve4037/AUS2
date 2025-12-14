@@ -33,11 +33,6 @@ public class Block<T extends IRecord> {
         return this.data;
     }
 
-    public void setDataNull() {
-        T temp = this.type.createClass();
-        this.data = (T[]) Array.newInstance(temp.getClass(), capacity);
-    }
-
     public boolean isFull() {
         return this.validCount >= this.capacity;
     }

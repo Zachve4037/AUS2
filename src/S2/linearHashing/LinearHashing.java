@@ -11,9 +11,9 @@ import java.util.List;
 public class LinearHashing<T extends IRecord & IHash> {
     private HeapFile<T> mainFile;
     private HeapFile<T> overflowFile;
-    private final int M; // initial count(buckets)
-    private int u; // level
-    private int S; // split pointer
+    private final int M;
+    private int u;
+    private int S;
     private long recordCount;
 
     private static final double MAX_DENSITY = 0.8;
@@ -33,18 +33,16 @@ public class LinearHashing<T extends IRecord & IHash> {
     }
 
     public void insert(T record) throws Exception {
-        System.out.println("Inserting record with hash: " + record.getHashCode());
         if (record == null) return;
         long key = record.getHashCode();
         int bucketAddr = findBucket(key);
         LHBlock<T> bucket = (LHBlock<T>) this.mainFile.readBlock(bucketAddr);
         //ak ma block v main file miesto
         if (!bucket.isFull()) {
-            bucket.getData()[bucket.getValidCount()] = record;
-            bucket.setValidCount(bucket.getValidCount() + 1);
+            this.addRecordToBlock(bucket, record);
             this.mainFile.writeBlock(bucketAddr, bucket);
             this.recordCount++;
-            if (this.performSplit()) {
+            if (this.shouldSPlit()) {
                 this.split();
             }
             return;
@@ -58,11 +56,10 @@ public class LinearHashing<T extends IRecord & IHash> {
             while (overflowAddr != -1) {
                 overflowBucket = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
                 if (!overflowBucket.isFull()) {
-                    overflowBucket.getData()[overflowBucket.getValidCount()] = record;
-                    overflowBucket.setValidCount(overflowBucket.getValidCount() + 1);
+                    this.addRecordToBlock(overflowBucket, record);
                     this.overflowFile.writeBlock(overflowAddr, overflowBucket);
                     this.recordCount++;
-                    if (this.performSplit()) {
+                    if (this.shouldSPlit()) {
                         this.split();
                     }
                     return;
@@ -77,7 +74,7 @@ public class LinearHashing<T extends IRecord & IHash> {
             overflowBucket.setNextBlockAddr(newOverflowAddr);
             this.overflowFile.writeBlock(lastValidOverflowAddr, overflowBucket);
             this.recordCount++;
-            if (this.performSplit()) {
+            if (this.shouldSPlit()) {
                 this.split();
             }
             return;
@@ -89,13 +86,18 @@ public class LinearHashing<T extends IRecord & IHash> {
             bucket.setNextBlockAddr(newOverflowAddr);
             this.mainFile.writeBlock(bucketAddr, bucket);
             this.recordCount++;
-            if (this.performSplit()) {
+            if (this.shouldSPlit()) {
                 this.split();
             }
         }
     }
 
-    private boolean performSplit() {
+    private void addRecordToBlock(LHBlock<T> block, T record) {
+        block.getData()[block.getValidCount()] = record;
+        block.setValidCount(block.getValidCount() + 1);
+    }
+
+    private boolean shouldSPlit() {
         int mainBlocks = (int) (M * Math.pow(2, u)) + S;
         int mainCapacity = mainBlocks * this.mainFile.getBlockingFactor();
         int overflowCapacity = this.overflowFile.getTotalBlockCount() * this.overflowFile.getBlockingFactor();
@@ -105,37 +107,24 @@ public class LinearHashing<T extends IRecord & IHash> {
     }
 
     public T get(T wanted) throws IOException {
-        if (wanted == null) return null;
-        long key = wanted.getHashCode();
-        int bucket = findBucket(key);
-        LHBlock<T> mainBucket = (LHBlock<T>) this.mainFile.readBlock(bucket);
-        for (int i = 0; i < mainBucket.getValidCount(); i++) {
-            if (mainBucket.getData()[i].equals(wanted)) {
-                return mainBucket.getData()[i];
-            }
-        }
-        int overflowAddr = mainBucket.getNextBlockAddr();
-        while (overflowAddr != -1) {
-            LHBlock<T> overflowBucket = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
-            for (int i = 0; i < overflowBucket.getValidCount(); i++) {
-                if (overflowBucket.getData()[i].equals(wanted)) {
-                    return overflowBucket.getData()[i];
-                }
-            }
-            overflowAddr = overflowBucket.getNextBlockAddr();
-        }
-        return null;
+        return searchOrUpdate(wanted, false);
     }
 
     public T update(T wanted) throws IOException {
+        return searchOrUpdate(wanted, true);
+    }
+
+    private T searchOrUpdate(T wanted, boolean update) throws IOException {
         if (wanted == null) return null;
         long key = wanted.getHashCode();
         int bucket = findBucket(key);
         LHBlock<T> mainBucket = (LHBlock<T>) this.mainFile.readBlock(bucket);
         for (int i = 0; i < mainBucket.getValidCount(); i++) {
             if (mainBucket.getData()[i].equals(wanted)) {
-                mainBucket.getData()[i] = wanted;
-                this.mainFile.writeBlock(bucket, mainBucket);
+                if(update) {
+                    mainBucket.getData()[i] = wanted;
+                    this.mainFile.writeBlock(bucket, mainBucket);
+                }
                 return mainBucket.getData()[i];
             }
         }
@@ -144,8 +133,10 @@ public class LinearHashing<T extends IRecord & IHash> {
             LHBlock<T> overflowBucket = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
             for (int i = 0; i < overflowBucket.getValidCount(); i++) {
                 if (overflowBucket.getData()[i].equals(wanted)) {
-                    overflowBucket.getData()[i] = wanted;
-                    this.overflowFile.writeBlock(overflowAddr, overflowBucket);
+                    if (update) {
+                        overflowBucket.getData()[i] = wanted;
+                        this.overflowFile.writeBlock(overflowAddr, overflowBucket);
+                    }
                     return overflowBucket.getData()[i];
                 }
             }
@@ -155,7 +146,6 @@ public class LinearHashing<T extends IRecord & IHash> {
     }
 
     private void split() throws Exception {
-        System.out.println("Splitting bucket at address: " + this.S);
         int oldBucketAddr = this.S;
         int newBucketAddr = (int) (S + (M * Math.pow(2, u)));
 
@@ -231,8 +221,7 @@ public class LinearHashing<T extends IRecord & IHash> {
 
         //naplnam iba pokym nie je plny
         while(!mainBlock.isFull() && recordIndex < records.size()) {
-            mainBlock.getData()[mainBlock.getValidCount()] = records.get(recordIndex);
-            mainBlock.setValidCount(mainBlock.getValidCount() + 1);
+            this.addRecordToBlock(mainBlock, records.get(recordIndex));
             recordIndex++;
         }
 
@@ -255,7 +244,6 @@ public class LinearHashing<T extends IRecord & IHash> {
                 overflowAddr = addresses.get(overflowCount);
                 overflowBlock = (LHBlock<T>) this.overflowFile.readBlock(overflowAddr);
                 overflowBlock.setValidCount(0);
-                overflowBlock.setDataNull();
                 overflowBlock.setNextBlockAddr(-1);
             } else {
                 overflowAddr = this.overflowFile.getTotalBlockCount();
@@ -264,10 +252,8 @@ public class LinearHashing<T extends IRecord & IHash> {
                 addresses.add(overflowAddr);
             }
 
-            //to iste co s mainom
             while (!overflowBlock.isFull() && recordIndex < records.size()) {
-                overflowBlock.getData()[overflowBlock.getValidCount()] = records.get(recordIndex);
-                overflowBlock.setValidCount(overflowBlock.getValidCount() + 1);
+                this.addRecordToBlock(overflowBlock, records.get(recordIndex));
                 recordIndex++;
             }
 

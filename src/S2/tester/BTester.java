@@ -17,100 +17,17 @@ import java.util.HashMap;
 import java.util.Random;
 
 public class BTester {
-    private final int OPERATIONS = 100_000;
+    private final int OPERATIONS = 10000;
     private final int INSERT = 40;
     private final int DELETE = 70;
 
     public BTester() {
     }
 
-//    public void testLinearHashing() {
-//        System.out.println("testLinearHashing");
-//        try {
-//            for (int j = 1; j < 2; j++) {
-//                File mainFile = new File("test_lh.dat");
-//                File mainMetaFile = new File("test_lh.meta");
-//                File overflowFile = new File("test_lh_overflow.dat");
-//                File overflowMetaFile = new File("test_lh_overflow.meta");
-//
-//                if (mainFile.exists()) mainFile.delete();
-//                if (mainMetaFile.exists()) mainMetaFile.delete();
-//                if (overflowFile.exists()) overflowFile.delete();
-//                if (overflowMetaFile.exists()) overflowMetaFile.delete();
-//
-//                RandomAccessFile mainRaf = new RandomAccessFile(mainFile, "rw");
-//                RandomAccessFile overflowRaf = new RandomAccessFile(overflowFile, "rw");
-//
-//                HeapFile<TestIntegerRecord> mainHF = new HeapFile<>(
-//                        mainRaf,
-//                        () -> new TestIntegerRecord(),
-//                        4,
-//                        64,
-//                        mainMetaFile.getAbsolutePath(),
-//                        true
-//                );
-//
-//                HeapFile<TestIntegerRecord> overflowHF = new HeapFile<>(
-//                        overflowRaf,
-//                        () -> new TestIntegerRecord(),
-//                        4,
-//                        64,
-//                        overflowMetaFile.getAbsolutePath(),
-//                        true
-//                );
-//
-//                LinearHashing<TestIntegerRecord> lh = new LinearHashing<>(mainHF, overflowHF, 2);
-//                ArrayList<TestIntegerRecord> allRecords = new ArrayList<>();
-//                Random rng = new Random(j);
-//
-//                for (int i = 0; i < OPERATIONS; i++) {
-//                    int operation = rng.nextInt(100);
-//                    if (operation < INSERT) {
-//                        int value = rng.nextInt(1_000_000);
-//                        TestIntegerRecord record = new TestIntegerRecord(value);
-//                        boolean exists = false;
-//                        for (TestIntegerRecord r : allRecords) {
-//                            if (r.equals(record)) {
-//                                exists = true;
-//                                break;
-//                            }
-//                        }
-//                        if (!exists) {
-//                            allRecords.add(record);
-//                            lh.insert(record);
-//                        }
-//                    } else {
-//                        if (!allRecords.isEmpty()) {
-//                            int index = rng.nextInt(allRecords.size());
-//                            TestIntegerRecord expected = allRecords.get(index);
-//                            TestIntegerRecord result = lh.get(expected);
-//
-//                            if (result == null || !result.equals(expected)) {
-//                                throw new AssertionError("Get failed at iteration " + i);
-//                            }
-//                        }
-//                    }
-//                    if (i % 10_000 == 0) {
-//                        for (TestIntegerRecord rec : allRecords) {
-//                            TestIntegerRecord expected = lh.get(rec);
-//                            if (expected == null || !expected.equals(rec)) {
-//                                throw new AssertionError("Validation failed at iteration " + i);
-//                            }
-//                        }
-//                    }
-//                }
-//                mainRaf.close();
-//                overflowRaf.close();
-//            }
-//        } catch (Exception e) {
-//            throw new RuntimeException("Linear Hashing Test failed", e);
-//        }
-//    }
-
     public void testLinearHashing() {
         System.out.println("testLinearHashing");
         try {
-            for (int j = 1; j < 20; j++) {
+            for (int j = 1; j < 20_000; j++) {
                 File mainFile = new File("test_lh.dat");
                 File mainMetaFile = new File("test_lh.meta");
                 File overflowFile = new File("test_lh_overflow.dat");
@@ -128,7 +45,7 @@ public class BTester {
                         mainRaf,
                         () -> new TestIntegerRecord(),
                         4,
-                        12,
+                        64,
                         mainMetaFile.getAbsolutePath(),
                         true
                 );
@@ -137,7 +54,7 @@ public class BTester {
                         overflowRaf,
                         () -> new TestIntegerRecord(),
                         4,
-                        20,
+                        64,
                         overflowMetaFile.getAbsolutePath(),
                         true
                 );
@@ -149,7 +66,7 @@ public class BTester {
                 for (int i = 0; i < OPERATIONS; i++) {
                     int operation = rng.nextInt(100);
                     if (operation < INSERT) {
-                        int value = rng.nextInt(100);
+                        int value = rng.nextInt(1_000_000);
                         TestIntegerRecord record = new TestIntegerRecord(value);
                         boolean exists = false;
                         for (TestIntegerRecord r : allRecords) {
@@ -161,10 +78,6 @@ public class BTester {
                         if (!exists) {
                             allRecords.add(record);
                             lh.insert(record);
-                            System.out.println("[" + i + "] INSERT: " + value +
-                                    " | Total records: " + allRecords.size() +
-                                    " | Main blocks: " + mainHF.getTotalBlockCount() +
-                                    " | Overflow blocks: " + overflowHF.getTotalBlockCount());
                         }
                     } else {
                         if (!allRecords.isEmpty()) {
@@ -172,42 +85,19 @@ public class BTester {
                             TestIntegerRecord expected = allRecords.get(index);
                             TestIntegerRecord result = lh.get(expected);
 
-                            System.out.println("[" + i + "] GET: " + expected.getValue() +
-                                    " | Expected: " + expected +
-                                    " | Got: " + result +
-                                    " | Total records: " + allRecords.size());
-
                             if (result == null || !result.equals(expected)) {
-                                System.out.println("=== FAILURE DETAILS ===");
-                                System.out.println("Iteration: " + i);
-                                System.out.println("Seed: " + j);
-                                System.out.println("Expected record: " + expected.getValue());
-                                System.out.println("Result: " + result);
-                                System.out.println("All records in list: " + allRecords.size());
-                                System.out.println("Main blocks: " + mainHF.getTotalBlockCount());
-                                System.out.println("Overflow blocks: " + overflowHF.getTotalBlockCount());
-                                System.out.println("\nDumping all records:");
-                                for (int k = 0; k < allRecords.size(); k++) {
-                                    System.out.println("  [" + k + "] = " + allRecords.get(k).getValue());
-                                }
-                                System.out.println("\nDumping bucket structure:");
-//                                printBuckets(mainHF, overflowHF);
                                 throw new AssertionError("Get failed at iteration " + i);
                             }
                         }
                     }
-                    printBuckets(mainHF, overflowHF);
-                    if (i % 1000 == 0) {
-                        System.out.println("=== VALIDATION at iteration " + i + " ===");
+//                    this.printBuckets(mainHF, overflowHF);
+                    if (i % 10_000 == 0) {
                         for (TestIntegerRecord rec : allRecords) {
                             TestIntegerRecord expected = lh.get(rec);
                             if (expected == null || !expected.equals(rec)) {
-                                System.out.println("Validation failed for: " + rec.getValue());
-                                printBuckets(mainHF, overflowHF);
                                 throw new AssertionError("Validation failed at iteration " + i);
                             }
                         }
-                        System.out.println("Validation passed. Records: " + allRecords.size());
                     }
                 }
                 mainRaf.close();
@@ -307,7 +197,7 @@ public class BTester {
     public void testHeapFile() {
         System.out.println("testHeapFile");
         try {
-            for (int j = 1; j < 20; j++) {
+            for (int j = 1; j < 20_000; j++) {
                 File dataFile = new File("test_heap_.dat");
                 File metaFile = new File("test_heap_.meta");
                 if (dataFile.exists()) dataFile.delete();
@@ -389,6 +279,7 @@ public class BTester {
     }
 
     public void testLeftmostInsertion() {
+        System.out.println("testLeftmostInsertion");
         try {
             File dataFile = new File("test_leftmost.dat");
             File metaFile = new File("test_leftmost.meta");

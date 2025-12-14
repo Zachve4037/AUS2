@@ -11,7 +11,6 @@ public class HeapFile<T extends IRecord> {
     private final IData<T> type;
     private final int blockSize;
     private final int blockingFactor;
-    private final String metadadaPath;
     private final AVLTree<Integer> partiallyFreeBlocks;
     private final AVLTree<Integer> fullyEmptyBlocks;
     private final boolean useLHBlock;
@@ -22,7 +21,6 @@ public class HeapFile<T extends IRecord> {
         this.file = file;
         this.type = type;
         this.blockSize = blockSize;
-        this.metadadaPath = metadataPath;
         this.useLHBlock = useMainHeader;
         this.partiallyFreeBlocks = new AVLTree<>();
         this.fullyEmptyBlocks = new AVLTree<>();
@@ -47,6 +45,12 @@ public class HeapFile<T extends IRecord> {
     public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize,
                     String metadataPath) throws IOException {
         this(file, type, recordSize, blockSize, metadataPath, false);
+    }
+
+    private Block<T> createNewBlock() {
+        return this.useLHBlock
+                ? new LHBlock<>(this.blockingFactor, this.type)
+                : new Block<>(this.blockingFactor, this.type);
     }
 
     public int insert(T record) throws IOException {
@@ -74,25 +78,21 @@ public class HeapFile<T extends IRecord> {
                 if (this.fullyEmptyBlocks.getNodeCount() > 0) {
                     address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
                     this.fullyEmptyBlocks.delete(address);
-                    block = this.useLHBlock
-                            ? new LHBlock<>(this.blockingFactor, this.type)
-                            : new Block<>(this.blockingFactor, this.type);
+                    block = this.createNewBlock();
                     this.partiallyFreeBlocks.insert(address);
                 } else {
                     address = this.totalBlocks++;
-                    block = this.useLHBlock
-                            ? new LHBlock<>(this.blockingFactor, this.type)
-                            : new Block<>(this.blockingFactor, this.type);
+                    block = this.createNewBlock();
                     this.partiallyFreeBlocks.insert(address);
                 }
             } else {
                 if (this.fullyEmptyBlocks.getNodeCount() > 0) {
                     address = this.fullyEmptyBlocks.findMin(this.fullyEmptyBlocks.getRoot());
                     this.fullyEmptyBlocks.delete(address);
-                    block = new LHBlock<>(this.blockingFactor, this.type);
+                    block = this.createNewBlock();
                 } else {
                     address = this.totalBlocks++;
-                    block = new LHBlock<>(this.blockingFactor, this.type);
+                    block = this.createNewBlock();
                 }
             }
         }
@@ -117,9 +117,8 @@ public class HeapFile<T extends IRecord> {
             return false;
         }
         //pouziva sa iba v linearnom hashovani, preto pouzivame rovno LHBlock
-        LHBlock<T> block = new LHBlock<>(this.blockingFactor, this.type);
+        LHBlock<T> block = (LHBlock<T>)this.createNewBlock();
         writeBlock(address, block);
-//        this.fullyEmptyBlocks.insert(address);
 
         if (address == this.totalBlocks) {
             this.totalBlocks++;
@@ -217,21 +216,15 @@ public class HeapFile<T extends IRecord> {
     }
 
     public Block<T> readBlock(int address) throws IOException {
-        long blockPosition = (long) address * this.blockSize;
-
-        if (blockPosition >= this.file.length()) {
-            return useLHBlock
-                    ? new LHBlock<>(this.blockingFactor, this.type)
-                    : new Block<>(this.blockingFactor, this.type);
+        if (((long) address * this.blockSize) >= this.file.length()) {
+            return this.createNewBlock();
         }
 
         seek(address);
         byte[] bytes = new byte[this.blockSize];
         this.file.readFully(bytes);
 
-        Block<T> block = useLHBlock
-                ? new LHBlock<>(this.blockingFactor, this.type)
-                : new Block<>(this.blockingFactor, this.type);
+        Block<T> block = this.createNewBlock();
         block.fromBytes(bytes);
         return block;
     }
