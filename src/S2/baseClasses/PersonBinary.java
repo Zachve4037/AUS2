@@ -13,12 +13,15 @@ public class PersonBinary implements IRecord, IHash {
     private String surname;
     private Date birthDate;
     private String id;
+    private int testCount;
+    private PCRTest[] tests;
 
     public PersonBinary(String name, String surname, Date birthDate, String id) {
         this.name = name;
         this.surname = surname;
         this.birthDate = birthDate;
         this.id = id;
+        this.tests = new PCRTest[6];
     }
 
     public PersonBinary() {
@@ -26,6 +29,11 @@ public class PersonBinary implements IRecord, IHash {
         this.surname = "";
         this.birthDate = null;
         this.id = "";
+        this.tests = new PCRTest[6];
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     @Override
@@ -38,7 +46,13 @@ public class PersonBinary implements IRecord, IHash {
 
     @Override
     public int getSize() {
-        return 176;
+        // name: 4 + 60 = 64
+        // surname: 4 + 56 = 60
+        // birthDate: 8
+        // id: 4 + 40 = 44
+        // testCount: 4
+        // tests[6]: 6 * 289 = 1734
+        return 1914;
     }
 
     @Override
@@ -49,9 +63,14 @@ public class PersonBinary implements IRecord, IHash {
         writeString(buffer, surname != null ? surname : "", 14);
         buffer.putLong(birthDate != null ? birthDate.getTime() : -1L);
         writeString(buffer, id != null ? id : "", 10);
+        buffer.putInt(this.testCount);
 
-        if (buffer.position() != 176) {
-            throw new AssertionError("Buffer position mismatch: " + buffer.position() + " != 176");
+        for (int i = 0; i < 6; i++) {
+            if (i < this.testCount && this.tests[i] != null) {
+                buffer.put(tests[i].getBytes());
+            } else {
+                buffer.put(new byte[289]);
+            }
         }
 
         return buffer.array();
@@ -67,17 +86,39 @@ public class PersonBinary implements IRecord, IHash {
         long time = buffer.getLong();
         this.birthDate = time >= 0 ? new Date(time) : null;
         this.id = readString(buffer, 10);
+        this.testCount = buffer.getInt();
+        this.tests = new PCRTest[6];
+
+        for (int i = 0; i < 6; i++) {
+            byte[] testBytes = new byte[268];
+            buffer.get(testBytes);
+
+            if (i < this.testCount) {
+                PCRTest test = new PCRTest();
+                test.fromBytes(testBytes);
+                this.tests[i] = test;
+            }
+        }
     }
 
     @Override
     public String toString() {
-        String pid = this.getId() != null ? this.getId() : "<null>";
-        String name = this.name != null ? this.name : "";
-        String surname = this.surname != null ? this.surname : "";
-        String birth = this.birthDate != null
-                ? new SimpleDateFormat("yyyy-MM-dd").format(this.birthDate)
-                : "";
-        return String.format("Person[id=%s, name=%s, surname=%s, birth=%s]", pid, name, surname, birth);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Person[id=").append(id)
+                .append(", name=").append(name)
+                .append(", surname=").append(surname)
+                .append(", birth=").append(birthDate)
+                .append(", testCount=").append(testCount)
+                .append("]");
+
+        if (testCount > 0) {
+            sb.append(" Tests:");
+            for (int i = 0; i < testCount; i++) {
+                sb.append("\n  ").append(i + 1).append(". ").append(tests[i].toString());
+            }
+        }
+
+        return sb.toString();
     }
 
 
@@ -130,5 +171,33 @@ public class PersonBinary implements IRecord, IHash {
             hash = 31 * hash + this.id.charAt(i);
         }
         return Math.abs(hash);
+    }
+
+    public int getTestCount() {
+        return this.testCount;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getSurname() {
+        return this.surname;
+    }
+
+    public void addTest(PCRTest test) {
+        if (this.testCount < 6) {
+            this.tests[this.testCount] = test;
+            this.testCount++;
+        }
+    }
+
+    public void updateTest(PCRTest updatedTest) {
+        for (int i = 0; i < this.testCount; i++) {
+            if (this.tests[i] != null && this.tests[i].getId() == updatedTest.getId()) {
+                this.tests[i] = updatedTest;
+                return;
+            }
+        }
     }
 }

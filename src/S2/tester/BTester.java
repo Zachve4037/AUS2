@@ -7,17 +7,15 @@ import S2.linearHashing.LHBlock;
 import S2.linearHashing.LinearHashing;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Random;
 
 public class BTester {
-    private final int OPERATIONS = 10000;
+    private final int OPERATIONS = 100_000;
     private final int INSERT = 40;
     private final int DELETE = 70;
 
@@ -43,7 +41,7 @@ public class BTester {
 
                 HeapFile<TestIntegerRecord> mainHF = new HeapFile<>(
                         mainRaf,
-                        () -> new TestIntegerRecord(),
+                        TestIntegerRecord::new,
                         4,
                         64,
                         mainMetaFile.getAbsolutePath(),
@@ -52,7 +50,7 @@ public class BTester {
 
                 HeapFile<TestIntegerRecord> overflowHF = new HeapFile<>(
                         overflowRaf,
-                        () -> new TestIntegerRecord(),
+                        TestIntegerRecord::new,
                         4,
                         64,
                         overflowMetaFile.getAbsolutePath(),
@@ -126,7 +124,7 @@ public class BTester {
 
             HeapFile<TestIntegerRecord> mainHF = new HeapFile<>(
                     mainRaf,
-                    () -> new TestIntegerRecord(),
+                    TestIntegerRecord::new,
                     4,
                     16,
                     mainMetaFile.getAbsolutePath(),
@@ -135,7 +133,7 @@ public class BTester {
 
             HeapFile<TestIntegerRecord> overflowHF = new HeapFile<>(
                     overflowRaf,
-                    () -> new TestIntegerRecord(),
+                    TestIntegerRecord::new,
                     4,
                     12,
                     overflowMetaFile.getAbsolutePath(),
@@ -197,7 +195,7 @@ public class BTester {
     public void testHeapFile() {
         System.out.println("testHeapFile");
         try {
-            for (int j = 1; j < 20_000; j++) {
+            for (int j = 1; j < 2; j++) {
                 File dataFile = new File("test_heap_.dat");
                 File metaFile = new File("test_heap_.meta");
                 if (dataFile.exists()) dataFile.delete();
@@ -207,9 +205,9 @@ public class BTester {
 
                 HeapFile<PersonBinary> hf = new HeapFile<>(
                         raf,
-                        () -> new PersonBinary(),
-                        176,
-                        512,
+                        PersonBinary::new,
+                        1914,
+                        1914 * 2,
                         metaFile.getAbsolutePath()
                 );
 
@@ -290,7 +288,7 @@ public class BTester {
 
             HeapFile<PersonBinary> hf = new HeapFile<>(
                     raf,
-                    () -> new PersonBinary(),
+                    PersonBinary::new,
                     176,
                     512,
                     metaFile.getAbsolutePath()
@@ -376,7 +374,7 @@ public class BTester {
 
             HeapFile<PersonBinary> hf = new HeapFile<>(
                     raf,
-                    () -> new PersonBinary(),
+                    PersonBinary::new,
                     176,
                     512,
                     metaFile.getAbsolutePath()
