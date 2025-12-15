@@ -208,7 +208,8 @@ public class BTester {
                         PersonBinary::new,
                         1788,
                         1788 * 2,
-                        metaFile.getAbsolutePath()
+                        metaFile.getAbsolutePath(),
+                        false
                 );
 
                 HashMap<String, Integer> addressMap = new HashMap<>();
@@ -291,7 +292,8 @@ public class BTester {
                     PersonBinary::new,
                     176,
                     512,
-                    metaFile.getAbsolutePath()
+                    metaFile.getAbsolutePath(),
+                    false
             );
 
             Random rng = new Random(42);
@@ -377,7 +379,8 @@ public class BTester {
                     PersonBinary::new,
                     176,
                     512,
-                    metaFile.getAbsolutePath()
+                    metaFile.getAbsolutePath(),
+                    false
             );
 
             Random rng = new Random(123);

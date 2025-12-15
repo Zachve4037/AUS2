@@ -200,10 +200,6 @@ public class LinearHashing<T extends IRecord & IHash> {
         int usedByOld = fillChain(recordsToOld, oldBucketAddr, overflowAddresses, 0);
         int usedByNew = fillChain(recordsToNew, newBucketAddr, overflowAddresses, usedByOld);
 
-        for (int i = usedByOld + usedByNew; i < overflowAddresses.size(); i++) {
-            this.overflowFile.insertEmptyBlockAt(overflowAddresses.get(i));
-        }
-
         this.overflowFile.cutEmptyFileBlocks();
     }
 

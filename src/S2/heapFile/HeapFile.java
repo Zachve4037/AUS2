@@ -41,12 +41,6 @@ public class HeapFile<T extends IRecord> {
         this.loadMetadata();
     }
 
-    //kvoli spatnej kompatibilite
-    public HeapFile(RandomAccessFile file, IData<T> type, int recordSize, int blockSize,
-                    String metadataPath) throws IOException {
-        this(file, type, recordSize, blockSize, metadataPath, false);
-    }
-
     private Block<T> createNewBlock() {
         return this.useLHBlock
                 ? new LHBlock<>(this.blockingFactor, this.type)
