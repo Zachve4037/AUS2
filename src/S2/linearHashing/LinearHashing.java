@@ -16,7 +16,7 @@ public class LinearHashing<T extends IRecord & IHash> {
     private int S;
     private long recordCount;
 
-    private static final double MAX_DENSITY = 0.8;
+    private static final double MAX_DENSITY = 0.6;
 
     public LinearHashing(HeapFile<T> mainFile, HeapFile<T> overflowFile, int initialBucketCount) throws IOException {
         this.mainFile = mainFile;
@@ -109,9 +109,7 @@ public class LinearHashing<T extends IRecord & IHash> {
     private boolean shouldSPlit() {
         int mainBlocks = (int) (M * Math.pow(2, u)) + S;
         int mainCapacity = mainBlocks * this.mainFile.getBlockingFactor();
-        int overflowCapacity = this.overflowFile.getTotalBlockCount() * this.overflowFile.getBlockingFactor();
-        int totalCapacity = mainCapacity + overflowCapacity;
-        double currentDensity = (double) this.recordCount / (double) totalCapacity;
+        double currentDensity = (double) this.recordCount / (double) mainCapacity;
         return currentDensity > MAX_DENSITY;
     }
 
