@@ -12,7 +12,7 @@ public class DB {
     private final int INITIAL_BUCKETS = 4;
     private LinearHashing<PersonBinary> people;
     private LinearHashing<PCRTest> tests;
-    private int testId = 0;
+    private int testId = 1;
     private int personId = 0;
     private String dataDirectoryPath;
 
@@ -173,8 +173,6 @@ public class DB {
         test.setId(this.testId++);
         String patientId = test.getPatientId();
         PersonBinary person = findPersonById(patientId);
-        test.setPatientName(person.getName());
-        test.setPatientSurname(person.getSurname());
         this.tests.insert(test);
 
         if (person != null) {
@@ -229,8 +227,6 @@ public class DB {
         }
         String personId = old.getPatientId();
         updatedTest.setPatientId(personId);
-        updatedTest.setPatientSurname(old.getPatientSurname());
-        updatedTest.setPatientName(old.getPatientName());
         this.tests.update(updatedTest);
 
         PersonBinary person = findPersonById(personId);

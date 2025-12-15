@@ -12,14 +12,14 @@ public class PersonBinary implements IRecord, IHash {
     private Date birthDate;
     private String id;
     private int testCount;
-    private PCRTest[] tests;
+    private int[] testsId;
 
     public PersonBinary(String name, String surname, Date birthDate, String id) {
         this.name = name;
         this.surname = surname;
         this.birthDate = birthDate;
         this.id = id;
-        this.tests = new PCRTest[6];
+        this.testsId = new int[6];
     }
 
     public PersonBinary() {
@@ -27,7 +27,7 @@ public class PersonBinary implements IRecord, IHash {
         this.surname = "";
         this.birthDate = null;
         this.id = "";
-        this.tests = new PCRTest[6];
+        this.testsId = new int[6];
     }
 
     public void setId(String id) {
@@ -44,13 +44,13 @@ public class PersonBinary implements IRecord, IHash {
 
     @Override
     public int getSize() {
-        // name: 4 + 60 = 64
-        // surname: 4 + 56 = 60
-        // birthDate: 8
-        // id: 4 + 40 = 44
-        // testCount: 4
-        // tests[6]: 6 * 268 = 1608
-        return 1788;
+//        64  name
+//        60  surname
+//        8   birthDate
+//        44  id
+//        4   testCount
+//        24  testsId[6]
+        return 204;
     }
 
     @Override
@@ -64,10 +64,10 @@ public class PersonBinary implements IRecord, IHash {
         buffer.putInt(this.testCount);
 
         for (int i = 0; i < 6; i++) {
-            if (i < this.testCount && this.tests[i] != null) {
-                buffer.put(tests[i].getBytes());
+            if (i < this.testCount) {
+                buffer.putInt(testsId[i]);
             } else {
-                buffer.put(new byte[268]);
+                buffer.put(new byte[4]);
             }
         }
 
@@ -85,16 +85,15 @@ public class PersonBinary implements IRecord, IHash {
         this.birthDate = time >= 0 ? new Date(time) : null;
         this.id = readString(buffer, 10);
         this.testCount = buffer.getInt();
-        this.tests = new PCRTest[6];
+        this.testsId = new int[6];
 
         for (int i = 0; i < 6; i++) {
-            byte[] testBytes = new byte[268];
+            byte[] testBytes = new byte[4];
             buffer.get(testBytes);
 
             if (i < this.testCount) {
-                PCRTest test = new PCRTest();
-                test.fromBytes(testBytes);
-                this.tests[i] = test;
+                int testId = ByteBuffer.wrap(testBytes).getInt();
+                this.testsId[i] = testId;
             }
         }
     }
@@ -112,7 +111,7 @@ public class PersonBinary implements IRecord, IHash {
         if (testCount > 0) {
             sb.append(" Tests:");
             for (int i = 0; i < testCount; i++) {
-                sb.append("\n  ").append(i + 1).append(". ").append(tests[i].toString());
+                sb.append(" ").append(testsId[i]);
             }
         }
 
@@ -189,29 +188,29 @@ public class PersonBinary implements IRecord, IHash {
 
     public void addTest(PCRTest test) {
         if (this.testCount < 6) {
-            this.tests[this.testCount] = test;
+            this.testsId[this.testCount] = test.getId();
             this.testCount++;
         }
     }
 
     public void updateTest(PCRTest updatedTest) {
         for (int i = 0; i < this.testCount; i++) {
-            if (this.tests[i] != null && this.tests[i].getId() == updatedTest.getId()) {
-                this.tests[i] = updatedTest;
+            if (this.testsId[i] == updatedTest.getId()) {
+                this.testsId[i] = updatedTest.getId();
                 return;
             }
         }
     }
 
-    public PCRTest[] getTests() {
-        return this.tests;
+    public int[] getTests() {
+        return this.testsId;
     }
 
-    public void setTests(PCRTest[] tests) {
-        this.tests = tests;
+    public void setTests(int[] tests) {
+        this.testsId = tests;
         this.testCount = 0;
-        for (PCRTest test : tests) {
-            if (test != null) {
+        for (int test : tests) {
+            if (test != 0) {
                 this.testCount++;
             }
         }

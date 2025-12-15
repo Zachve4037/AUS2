@@ -177,26 +177,26 @@ public class DBViewer extends JFrame {
 
             File peopleMain = new File(dir, "people_main.dat");
             File peopleMainMeta = new File(dir, "people_main.meta");
-            info.peopleMainBlockSize = calculateBlockSize(peopleMain, peopleMainMeta, 1788);
+            info.peopleMainBlockSize = calculateBlockSize(peopleMain, peopleMainMeta, 204);
 
             File peopleOverflow = new File(dir, "people_overflow.dat");
             File peopleOverflowMeta = new File(dir, "people_overflow.meta");
             if (peopleOverflow.exists() && peopleOverflowMeta.exists()) {
-                info.peopleOverflowBlockSize = calculateBlockSize(peopleOverflow, peopleOverflowMeta, 1788);
+                info.peopleOverflowBlockSize = calculateBlockSize(peopleOverflow, peopleOverflowMeta, 204);
             } else {
-                info.peopleOverflowBlockSize = 1788 * 2;
+                info.peopleOverflowBlockSize = 204* 2;
             }
 
             File testsMain = new File(dir, "tests_main.dat");
             File testsMainMeta = new File(dir, "tests_main.meta");
-            info.testsMainBlockSize = calculateBlockSize(testsMain, testsMainMeta, 268);
+            info.testsMainBlockSize = calculateBlockSize(testsMain, testsMainMeta, 117);
 
             File testsOverflow = new File(dir, "tests_overflow.dat");
             File testsOverflowMeta = new File(dir, "tests_overflow.meta");
             if (testsOverflow.exists() && testsOverflowMeta.exists()) {
-                info.testsOverflowBlockSize = calculateBlockSize(testsOverflow, testsOverflowMeta, 268);
+                info.testsOverflowBlockSize = calculateBlockSize(testsOverflow, testsOverflowMeta, 117);
             } else {
-                info.testsOverflowBlockSize = 268 * 2;
+                info.testsOverflowBlockSize = 117 * 2;
             }
 
             return info;
@@ -226,8 +226,8 @@ public class DBViewer extends JFrame {
     private void initializeDatabase() {
         JPanel configPanel = new JPanel(new GridLayout(5, 2, 5, 5));
 
-        int peopleRecordSize = 1788;
-        int testsRecordSize = 268;
+        int peopleRecordSize = 204;
+        int testsRecordSize = 117;
         int headerSize = 8;
 
         int peopleBlockSize = headerSize + (1 * peopleRecordSize);
@@ -451,7 +451,14 @@ public class DBViewer extends JFrame {
             try {
                 PersonBinary person = database.findPersonById(id);
                 if (person != null) {
+                    int[] tests = person.getTests();
                     showResult("Person found:\n" + person.toString());
+                    for (int i = 0; i < person.getTestCount(); i++) {
+                        PCRTest test = database.findTestById(tests[i]);
+                        if (test != null) {
+                            showResult(resultArea.getText() + "\nAssociated Test:\n" + test.toString());
+                        }
+                    }
                 } else {
                     showResult("Person not found with ID: " + id);
                 }
@@ -473,7 +480,11 @@ public class DBViewer extends JFrame {
                 int testId = Integer.parseInt(idStr);
                 PCRTest test = database.findTestById(testId);
                 if (test != null) {
+                    PersonBinary person = database.findPersonById(test.getpatientId());
                     showResult("Test found:\n" + test.toString());
+                    if (person != null) {
+                        showResult(resultArea.getText() + "\nAssociated Person:\n" + person.toString());
+                    }
                 } else {
                     showResult("Test not found with ID: " + testId);
                 }

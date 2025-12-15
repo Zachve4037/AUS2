@@ -86,7 +86,7 @@ public class HeapDumpDialog extends JDialog {
             if (fileSize == 0) return null;
 
             boolean isPeople = dataFile.getName().contains("people");
-            int recordSize = isPeople ? 1788 : 268;
+            int recordSize = isPeople ? 204 : 117;
             int headerSize = 8;
 
             for (int blockingFactor = 1; blockingFactor <= 20; blockingFactor++) {
@@ -146,13 +146,13 @@ public class HeapDumpDialog extends JDialog {
             boolean isPeople = dataFile.getName().contains("people");
 
             if (isPeople) {
-                int personRecordSize = 1788;
+                int personRecordSize = 204;
                 int blockingFactor = (blockSize - headerSize) / personRecordSize;
                 info.typeName = "PersonBinary";
                 info.recordSize = personRecordSize;
                 info.blockingFactor = blockingFactor;
             } else {
-                int testRecordSize = 268;
+                int testRecordSize = 117;
                 int blockingFactor = (blockSize - headerSize) / testRecordSize;
                 info.typeName = "PCRTest";
                 info.recordSize = testRecordSize;

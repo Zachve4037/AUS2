@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 public class PCRTest implements IRecord, IHash {
     private LocalDateTime timeOfTest;
     private String patientId;
-    private String patientName;
-    private String patientSurname;
     private int testId;
     private boolean result;
     private double value;
@@ -60,7 +58,13 @@ public class PCRTest implements IRecord, IHash {
 
     @Override
     public int getSize() {
-        return 268;
+//        12  timeOfTest
+//        44  patientId
+//        4   testId
+//        1   result
+//        8   vale
+//        48  note
+        return 117;
     }
 
     @Override
@@ -70,8 +74,6 @@ public class PCRTest implements IRecord, IHash {
         buffer.putLong(timeOfTest.toEpochSecond(java.time.ZoneOffset.UTC));
         buffer.putInt(timeOfTest.getNano());
         writeString(buffer, patientId != null ? patientId : "", 10);
-        writeString(buffer, patientName != null ? patientName : "", 15);
-        writeString(buffer, patientSurname != null ? patientSurname : "", 14);
         buffer.putInt(testId);
         buffer.put((byte) (result ? 1 : 0));
         buffer.putDouble(value);
@@ -88,9 +90,6 @@ public class PCRTest implements IRecord, IHash {
         int nanos = buffer.getInt();
         this.timeOfTest = LocalDateTime.ofEpochSecond(seconds, nanos, java.time.ZoneOffset.UTC);
         this.patientId = readString(buffer, 10);
-        this.patientName = readString(buffer, 15);
-        this.patientSurname = readString(buffer, 14);
-
 
         this.testId = buffer.getInt();
         this.result = buffer.get() != 0;
@@ -103,19 +102,6 @@ public class PCRTest implements IRecord, IHash {
         return "PCRTest{" +
                 "timeOfTest=" + timeOfTest +
                 ", patientId='" + patientId + '\'' +
-                ", patientName='" + patientName + '\'' +
-                ", patientSurname='" + patientSurname + '\'' +
-                ", testId=" + testId +
-                ", result=" + result +
-                ", value=" + value +
-                ", note='" + note + '\'' +
-                '}';
-    }
-
-    public String toStringPerson() {
-        return "PCRTest{" +
-                "timeOfTest=" + timeOfTest +
-                ", patientId='" + patientId + '\'' +
                 ", testId=" + testId +
                 ", result=" + result +
                 ", value=" + value +
@@ -125,14 +111,6 @@ public class PCRTest implements IRecord, IHash {
 
     public String getPatientId() {
         return this.patientId;
-    }
-
-    public void setPatientName(String name) {
-        this.patientName = name;
-    }
-
-    public void setPatientSurname(String surname) {
-        this.patientSurname = surname;
     }
 
     private void writeString(ByteBuffer buffer, String str, int maxChars) {
@@ -172,13 +150,5 @@ public class PCRTest implements IRecord, IHash {
     @Override
     public long getHashCode() {
         return Math.abs((long) this.testId);
-    }
-
-    public String getPatientSurname() {
-        return this.patientSurname;
-    }
-
-    public String getPatientName() {
-        return this.patientName;
     }
 }
