@@ -14,18 +14,13 @@ public class DB {
     private LinearHashing<PCRTest> tests;
     private int testId = 1;
     private int personId = 0;
-    private String dataDirectoryPath;
-    private final int peopleMainBlockSize;
-    private final int peopleOverflowBlockSize;
-    private final int testsMainBlockSize;
-    private final int testsOverflowBlockSize;
+    private final String dataDirectoryPath;
+    //pridane pre ziskanie velkosti blokov
 
     public DB(String dataDirectoryPath, int peopleBlockSizeMain, int peopleBlockSizeOverflow,
-              int testBlockSizeMain, int testBlockSizeOverflow, int peopleMainBlockSize, int peopleOverflowBlockSize, int testsMainBlockSize, int testsOverflowBlockSize) throws IOException {
-        this.peopleMainBlockSize = peopleMainBlockSize;
-        this.peopleOverflowBlockSize = peopleOverflowBlockSize;
-        this.testsMainBlockSize = testsMainBlockSize;
-        this.testsOverflowBlockSize = testsOverflowBlockSize;
+              int testBlockSizeMain, int testBlockSizeOverflow
+    ) throws IOException {
+
         File dir = new File(dataDirectoryPath);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -80,11 +75,7 @@ public class DB {
         this.tests = new LinearHashing<>(testsMain, testsOverflow, INITIAL_BUCKETS);
     }
 
-    public DB(String pathToConfig, int peopleMainBlockSize, int peopleOverflowBlockSize, int testsMainBlockSize, int testsOverflowBlockSize) throws IOException {
-        this.peopleMainBlockSize = peopleMainBlockSize;
-        this.peopleOverflowBlockSize = peopleOverflowBlockSize;
-        this.testsMainBlockSize = testsMainBlockSize;
-        this.testsOverflowBlockSize = testsOverflowBlockSize;
+    public DB(String pathToConfig) throws IOException {
         File configFile = new File(pathToConfig, "db_config.txt");
 
         Properties props = new Properties();
@@ -251,18 +242,18 @@ public class DB {
     }
 
     public int getPeopleMainBlockSize() {
-        return peopleMainBlockSize;
+        return this.people.getMainFile().getBlockSize();
     }
 
     public int getPeopleOverflowBlockSize() {
-        return peopleOverflowBlockSize;
+        return this.people.getOverflowFile().getBlockSize();
     }
 
     public int getTestsMainBlockSize() {
-        return testsMainBlockSize;
+        return this.tests.getMainFile().getBlockSize();
     }
 
     public int getTestsOverflowBlockSize() {
-        return testsOverflowBlockSize;
+        return this.tests.getOverflowFile().getBlockSize();
     }
 }

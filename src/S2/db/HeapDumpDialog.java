@@ -12,11 +12,13 @@ import java.util.List;
 public class HeapDumpDialog extends JDialog {
     private final File dataFile;
     private final File metaFile;
+    private final int blockSize;
 
-    public HeapDumpDialog(Frame owner, File dataFile, File metaFile) {
+    public HeapDumpDialog(Frame owner, File dataFile, File metaFile, int blockSize) {
         super(owner, "Heap Dump: " + dataFile.getName(), true);
         this.dataFile = dataFile;
         this.metaFile = metaFile;
+        this.blockSize = blockSize;
 
         setSize(900, 700);
         setLocationRelativeTo(owner);
@@ -85,34 +87,12 @@ public class HeapDumpDialog extends JDialog {
             long fileSize = raf.length();
             if (fileSize == 0) return null;
 
-            boolean isPeople = dataFile.getName().contains("people");
-            int recordSize = isPeople ? 204 : 117;
-            int headerSize = 8;
-
-            for (int blockingFactor = 1; blockingFactor <= 20; blockingFactor++) {
-                int blockSize = headerSize + (blockingFactor * recordSize);
-                if (fileSize % blockSize == 0) {
-                    Metadata meta = new Metadata();
-                    meta.totalBlocks = (int) (fileSize / blockSize);
-                    meta.partiallyFree = new ArrayList<>();
-                    meta.fullyEmpty = new ArrayList<>();
-                    meta.rawBytes = new byte[0];
-                    return meta;
-                }
+            if (fileSize % this.blockSize != 0) {
+                return null;
             }
-
-            int blockingFactor = 1;
-            int blockSize = headerSize + (blockingFactor * recordSize);
-            while (blockSize < fileSize) {
-                blockingFactor++;
-                blockSize = headerSize + (blockingFactor * recordSize);
-            }
-
-            blockingFactor--;
-            blockSize = headerSize + (blockingFactor * recordSize);
 
             Metadata meta = new Metadata();
-            meta.totalBlocks = (int) (fileSize / blockSize);
+            meta.totalBlocks = (int) (fileSize / this.blockSize);
             meta.partiallyFree = new ArrayList<>();
             meta.fullyEmpty = new ArrayList<>();
             meta.rawBytes = new byte[0];
@@ -122,6 +102,7 @@ public class HeapDumpDialog extends JDialog {
             return null;
         }
     }
+
 
     private static class RecordTypeInfo {
         String typeName;

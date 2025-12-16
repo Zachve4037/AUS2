@@ -143,18 +143,17 @@ public class DBViewer extends JFrame {
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File selectedDir = chooser.getSelectedFile();
             try {
-
                 File configFile = new File(selectedDir, "db_config.txt");
-                if (configFile.exists()) {
-                    currentDataDirectory = selectedDir.getAbsolutePath();
-                    database = new DB(currentDataDirectory);
-
-                    showResult("Database opened from existing configuration!\n" +
-                            "Directory: " + currentDataDirectory);
-                } else {
-                    showResult("No configuration file found in directory.\n" +
-                            "Please use 'Initialize DB' to create a new database.");
+                if (!configFile.exists()) {
+                    showResult("No configuration file found.\nUse Initialize DB first.");
+                    return;
                 }
+
+                currentDataDirectory = selectedDir.getAbsolutePath();
+                database = new DB(currentDataDirectory);
+
+                showResult("Database opened from existing configuration!\n" +
+                        "Directory: " + currentDataDirectory);
 
             } catch (Exception ex) {
                 showResult("Error opening database: " + ex.getMessage());
@@ -163,6 +162,7 @@ public class DBViewer extends JFrame {
             }
         }
     }
+
 
     private static class BlockSizeInfo {
         int peopleMainBlockSize;
@@ -653,7 +653,24 @@ public class DBViewer extends JFrame {
         }
 
         currentDataDirectory = selectedDirectory.getAbsolutePath();
-        HeapDumpDialog dialog = new HeapDumpDialog(this, dataFile, metaFile);
+        int blockSize;
+        switch(fileName) {
+            case "people_main":
+                blockSize = database.getPeopleMainBlockSize();
+                break;
+            case "people_overflow":
+                blockSize = database.getPeopleOverflowBlockSize();
+                break;
+            case "tests_main":
+                blockSize = database.getTestsMainBlockSize();
+                break;
+            case "tests_overflow":
+                blockSize = database.getTestsOverflowBlockSize();
+                break;
+            default:
+                throw new IllegalStateException(("Uknkow heap file: " + fileName));
+        }
+        HeapDumpDialog dialog = new HeapDumpDialog(this, dataFile, metaFile, blockSize);
         dialog.setVisible(true);
     }
 
