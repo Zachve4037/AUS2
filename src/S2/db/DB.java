@@ -15,9 +15,17 @@ public class DB {
     private int testId = 1;
     private int personId = 0;
     private String dataDirectoryPath;
+    private final int peopleMainBlockSize;
+    private final int peopleOverflowBlockSize;
+    private final int testsMainBlockSize;
+    private final int testsOverflowBlockSize;
 
     public DB(String dataDirectoryPath, int peopleBlockSizeMain, int peopleBlockSizeOverflow,
-              int testBlockSizeMain, int testBlockSizeOverflow) throws IOException {
+              int testBlockSizeMain, int testBlockSizeOverflow, int peopleMainBlockSize, int peopleOverflowBlockSize, int testsMainBlockSize, int testsOverflowBlockSize) throws IOException {
+        this.peopleMainBlockSize = peopleMainBlockSize;
+        this.peopleOverflowBlockSize = peopleOverflowBlockSize;
+        this.testsMainBlockSize = testsMainBlockSize;
+        this.testsOverflowBlockSize = testsOverflowBlockSize;
         File dir = new File(dataDirectoryPath);
         if (!dir.exists()) {
             dir.mkdirs();
@@ -72,7 +80,11 @@ public class DB {
         this.tests = new LinearHashing<>(testsMain, testsOverflow, INITIAL_BUCKETS);
     }
 
-    public DB(String pathToConfig) throws IOException {
+    public DB(String pathToConfig, int peopleMainBlockSize, int peopleOverflowBlockSize, int testsMainBlockSize, int testsOverflowBlockSize) throws IOException {
+        this.peopleMainBlockSize = peopleMainBlockSize;
+        this.peopleOverflowBlockSize = peopleOverflowBlockSize;
+        this.testsMainBlockSize = testsMainBlockSize;
+        this.testsOverflowBlockSize = testsOverflowBlockSize;
         File configFile = new File(pathToConfig, "db_config.txt");
 
         Properties props = new Properties();
@@ -236,5 +248,21 @@ public class DB {
         } else {
             throw new IllegalArgumentException("Person with id: " + personId + " not found.");
         }
+    }
+
+    public int getPeopleMainBlockSize() {
+        return peopleMainBlockSize;
+    }
+
+    public int getPeopleOverflowBlockSize() {
+        return peopleOverflowBlockSize;
+    }
+
+    public int getTestsMainBlockSize() {
+        return testsMainBlockSize;
+    }
+
+    public int getTestsOverflowBlockSize() {
+        return testsOverflowBlockSize;
     }
 }
